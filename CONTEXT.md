@@ -6,31 +6,42 @@
 ## IDENTIDAD DEL PROYECTO
 
 Sistema RAG de transparencia pública con dos bloques:
-- **Bloque A** (COMPLETADO): Chatbot que responde preguntas sobre presupuestos públicos en lenguaje natural
-- **Bloque B** (EN CURSO): Detección de anomalías en licitaciones públicas españolas
+- **Bloque A** (COMPLETO y FUNCIONAL con interfaz web): Chatbot que responde preguntas sobre presupuestos públicos en lenguaje natural
+- **Bloque B** (PENDIENTE): Detección de anomalías en licitaciones públicas españolas
 
+---
 
+## STACK TECNOLÓGICO ACTUAL
+
+| Capa | Tecnología | Versión/Notas |
+|------|-----------|---------------|
+| Python | 3.11 | venv creado con `/opt/homebrew/bin/python3.11` |
+| PDF extraction | pdfplumber | — |
+| Embeddings | OpenAI text-embedding-3-small | vectores 1536d |
+| Vector store | ChromaDB local | `data/vectordb/` (sqlite3) |
+| LLM | GPT-4o-mini | temperature=0.3 |
+| Reducción dim. | PCA (sklearn) | reemplazó a UMAP — ver decisiones técnicas |
+| Backend | FastAPI 0.115 + Uvicorn | puerto 8000 |
+| Frontend | React 19 + Vite 8 + Tailwind 4 | puerto 5173 (o 5174 si está ocupado) |
+| Visualización | plotly.js 3.x | importado directo — ver decisiones técnicas |
+| OS / entorno | macOS, VSCode | — |
+
+> **IMPORTANTE sobre Python**: usar siempre `venv/bin/python` y `venv/bin/pip`.
+> Claude Code y terminales macOS pueden apuntar al Python global de Homebrew sin las librerías del proyecto.
 
 ---
 
 ## BLOQUE A — ARQUITECTURA RAG COMPLETA
 
-### Stack tecnológico
-- **Extracción PDF**: pdfplumber (texto + tablas)
-- **Embeddings**: OpenAI text-embedding-3-small (vectores 1536d)
-- **Vector store**: ChromaDB local (data/vectordb/) — sqlite3
-- **LLM**: GPT-4o-mini, temperature=0.3
-- **Entorno**: Python 3.14.3, venv, macOS, VSCode
-
-### Pipeline offline (pipeline.py orquesta todo)
+### Pipeline offline (`pipeline.py` orquesta todo)
 ```
 data/raw/*.pdf
-  → src/extractor.py     → data/processed/datos_extraidos.json
-  → src/chunker.py       → data/processed/chunks.json
-  → src/embedder.py      → data/vectordb/ (ChromaDB)
+  → src/extractor.py      → data/processed/datos_extraidos.json
+  → src/chunker.py        → data/processed/chunks.json
+  → src/embedder.py       → data/vectordb/ (ChromaDB)
 ```
 
-### Pipeline online (src/chatbot.py)
+### Pipeline online (`src/chatbot.py` CLI / `api/server.py` HTTP)
 ```
 pregunta usuario
   → embed pregunta (OpenAI text-embedding-3-small)
@@ -41,55 +52,68 @@ pregunta usuario
 
 ### Parámetros clave
 - Chunk size: 500 tokens
-- Solapamiento: 50 tokens
+- Solapamiento: 50 tokens (10%)
 - Tablas: 1 chunk por tabla completa (cabecera+filas como "col: valor | col: valor")
 - Chunks recuperados en query: n=6
-- Total vectores actuales: 543
+- Total vectores actuales: **543**
 
 ### Documentos indexados
-- presupuestos_generales_2026.pdf — Comunidad de Madrid 2026 (50 págs)
-- resumen_ingresos_y_gastos.pdf — Resumen ingresos/gastos Madrid (3 págs)
-- ResumenEjecutivo2026.pdf — Presupuestos todas las CC.AA. España 2026 (241 págs)
+| Fichero | Descripción | Páginas |
+|---------|-------------|---------|
+| `presupuestos_generales_2026.pdf` | Comunidad de Madrid 2026 | 50 |
+| `resumen_ingresos_y_gastos.pdf` | Resumen ingresos/gastos Madrid | 3 |
+| `ResumenEjecutivo2026.pdf` | Presupuestos todas las CC.AA. España 2026 | 241 |
 
 ### Procesamiento incremental
-pipeline.py detecta si un PDF ya está en ChromaDB por fuente. Si existe → salta. Si no → procesa y añade. No duplica vectores.
+`pipeline.py` detecta si un PDF ya está en ChromaDB por la clave `fuente`. Si existe → salta. Si no → procesa y añade. No duplica vectores.
 
 ---
 
 ## ESTRUCTURA DE CARPETAS
 
 ```
-Isdi-presupuestos_estado/
+Isdi-presupuestos/
 ├── api/
 │   ├── __init__.py
-│   └── server.py         ← FastAPI — endpoints /chat /vectores /health
+│   └── server.py              ← FastAPI — endpoints /chat /vectores /health
 ├── data/
-│   ├── raw/              ← PDFs fuente (nunca modificar)
-│   ├── processed/        ← JSONs intermedios (regenerables)
-│   └── vectordb/         ← ChromaDB (regenerable con pipeline.py)
+│   ├── raw/                   ← PDFs fuente (NUNCA modificar)
+│   ├── processed/             ← JSONs intermedios (regenerables con pipeline.py)
+│   └── vectordb/              ← ChromaDB (regenerable con pipeline.py)
+├── frontend/                  ← React + Vite + Tailwind
+│   ├── src/
+│   │   ├── App.jsx            ← Raíz: header, tabs, modo ciudadano/técnico
+│   │   ├── components/
+│   │   │   ├── ChatPanel.jsx  ← Chat con el RAG, input, burbujas de mensaje
+│   │   │   ├── TechPanel.jsx  ← Panel técnico RAG: timeline de fases + chunks
+│   │   │   └── VectorMap.jsx  ← Visualización 3D Plotly de la base vectorial
+│   │   ├── index.css          ← Variables CSS globales, dark theme
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js         ← puerto configurado: 5173
 ├── src/
-│   ├── extractor.py      ← pdfplumber → JSON
-│   ├── chunker.py        ← JSON → chunks con solapamiento
-│   ├── embedder.py       ← chunks → vectores ChromaDB
-│   ├── chatbot.py        ← interfaz conversacional terminal
-│   ├── procesador_tablas.py ← script debug inspección tablas
-│   └── descargador_licitaciones.py ← prototipo Bloque B
-├── pipeline.py           ← orquestador Bloque A
-├── start_api.sh          ← arranca uvicorn en puerto 8000
-├── .env                  ← OPENAI_API_KEY (nunca a Git)
-├── .gitignore            ← venv/, __pycache__/, .env
-└── requirements.txt      ← todas las dependencias con versiones
+│   ├── extractor.py           ← pdfplumber → JSON
+│   ├── chunker.py             ← JSON → chunks con solapamiento
+│   ├── embedder.py            ← chunks → vectores ChromaDB
+│   ├── chatbot.py             ← interfaz conversacional terminal (legacy)
+│   ├── procesador_tablas.py   ← script debug/inspección de tablas
+│   └── descargador_licitaciones.py ← prototipo Bloque B (no integrado)
+├── pipeline.py                ← orquestador Bloque A
+├── start_api.sh               ← `source venv/bin/activate && uvicorn api.server:app --reload --port 8000`
+├── requirements.txt           ← dependencias con versiones exactas
+├── .env                       ← OPENAI_API_KEY (NUNCA a Git)
+└── .gitignore                 ← venv/, __pycache__/, .env
 ```
 
 ---
 
-## API REST (Bloque A — capa backend)
+## API REST (Bloque A — backend)
 
 ### Stack
-- **Framework**: FastAPI 0.115
-- **Servidor**: Uvicorn (ASGI), puerto 8000
-- **CORS**: allow_origins=["*"] (acepta localhost:3000 y producción)
-- **Arranque**: `bash start_api.sh` (o `source venv/bin/activate && uvicorn api.server:app --reload --port 8000`)
+- Framework: FastAPI 0.115
+- Servidor: Uvicorn (ASGI), puerto 8000
+- CORS: `allow_origins=["*"]` (acepta frontend local y producción)
+- Arranque: `bash start_api.sh`
 
 ### Endpoints
 
@@ -100,7 +124,6 @@ Responde preguntas sobre presupuestos usando el pipeline RAG completo.
 ```json
 { "pregunta": "¿Cuánto destina Madrid a Sanidad?", "historial": [] }
 ```
-
 **Response**
 ```json
 {
@@ -110,11 +133,10 @@ Responde preguntas sobre presupuestos usando el pipeline RAG completo.
   ]
 }
 ```
-
 **Lógica**: embed pregunta → ChromaDB top-6 → prompt + GPT-4o-mini (temperature=0.3)
 
 #### GET /vectores
-Devuelve todos los vectores de ChromaDB reducidos a 3D con UMAP (para visualización).
+Devuelve todos los vectores de ChromaDB reducidos a 3D con **PCA** (ya no UMAP).
 
 **Response**
 ```json
@@ -124,8 +146,7 @@ Devuelve todos los vectores de ChromaDB reducidos a 3D con UMAP (para visualizac
   ]
 }
 ```
-
-**Nota**: primera llamada tarda ~10s (UMAP procesa 543 vectores 1536d → 3d).
+**Nota**: La reducción PCA es instantánea (a diferencia de UMAP que tardaba ~10s).
 
 #### GET /health
 Comprueba que el servidor y ChromaDB están operativos.
@@ -137,45 +158,139 @@ Comprueba que el servidor y ChromaDB están operativos.
 
 ---
 
+## FRONTEND — Interfaz Web
+
+### Stack
+- React 19 + Vite 8 + Tailwind CSS 4
+- Dark theme con variables CSS (definidas en `src/index.css`)
+- Visualización 3D: `plotly.js` importado directamente — ver decisiones técnicas
+
+### Componentes principales
+
+| Componente | Descripción |
+|-----------|-------------|
+| `App.jsx` | Layout principal: header, toggle ciudadano/técnico, tabs Chat/Vectores |
+| `ChatPanel.jsx` | Interfaz de chat: burbujas, pantalla de bienvenida, sugerencias, input |
+| `TechPanel.jsx` | Panel lateral técnico: timeline de fases RAG + chunks recuperados con similitud |
+| `VectorMap.jsx` | Visualización 3D Plotly: nube de puntos con color por documento, hover con texto |
+
+### Dos modos de usuario
+- **Ciudadano**: solo muestra el chat (panel técnico oculto)
+- **Técnico**: chat a 60% ancho + TechPanel a 40% mostrando el proceso RAG en tiempo real
+
+### Dos tabs
+- **Chat**: interfaz conversacional con el RAG
+- **Base de Datos Vectorial**: visualización 3D interactiva de los 543 embeddings
+
+---
+
 ## COMANDOS CLAVE
 
 ```bash
-# Conectar al servidor
-ssh root@46.224.81.240
+# Arrancar backend
+bash start_api.sh
+# → disponible en http://localhost:8000
+# → Swagger/docs en http://localhost:8000/docs
 
-# Actualizar servidor tras push
-cd contratos_licitaciones && git pull
+# Arrancar frontend
+cd frontend && npm run dev
+# → disponible en http://localhost:5173 (o 5174 si 5173 está ocupado)
 
-# Ejecutar chatbot en local
+# Ejecutar chatbot en terminal (legacy)
 venv/bin/python3 src/chatbot.py
 
 # Reindexar (añadir PDFs nuevos a data/raw/ primero)
 venv/bin/python pipeline.py
 
-# Reconstruir entorno si venv se rompe
-rm -rf venv && python3 -m venv venv && venv/bin/pip install -r requirements.txt
+# Reconstruir venv si se rompe
+rm -rf venv
+/opt/homebrew/bin/python3.11 -m venv venv
+venv/bin/pip install -r requirements.txt
+
+# Conectar al servidor Hetzner
+ssh root@46.224.81.240
+
+# Actualizar servidor tras push
+cd contratos_licitaciones && git pull
 ```
 
-**IMPORTANTE**: Usar siempre `venv/bin/python` y `venv/bin/pip` — Claude Code rompe el PATH del terminal en macOS y `python`/`python3` apuntan al Homebrew global sin las librerías del proyecto.
+---
+
+## DECISIONES TÉCNICAS IMPORTANTES
+
+### PCA en lugar de UMAP
+
+| | UMAP | PCA (elegida) |
+|--|------|--------------|
+| Librería | umap-learn | scikit-learn (ya instalada) |
+| Compatibilidad | **Rota en Python 3.11**: busca `pkg_resources` que no existe | Estable, sin dependencias extra |
+| Velocidad | ~10s para 543 vectores | Instantáneo |
+| Calidad visual | Mejor preservación topológica local | Suficiente para visualización exploratoria |
+
+**Conclusión**: umap-learn 0.5.x depende de `pkg_resources` (parte de `setuptools` antiguo), que Python 3.11 elimina. Se probó sin éxito. PCA de scikit-learn es suficiente para el objetivo de visualización del proyecto.
+
+### Python 3.11 en lugar de 3.14
+
+Python 3.14.3 fue descartado porque estas librerías claves del proyecto no son compatibles:
+- **ChromaDB**: fallos en compilación de dependencias nativas
+- **FastAPI** + **tenacity**: incompatibilidades con internos del intérprete
+- **opentelemetry**: dependencia transitiva de ChromaDB, falla en 3.14
+
+**Solución**: venv creado con `/opt/homebrew/bin/python3.11` — versión estable con soporte completo de todas las dependencias.
+
+### Plotly con Vite — import directo
+
+`react-plotly.js` usa `createPlotlyComponent()` que falla con Vite porque intenta acceder a objetos del DOM durante el import. La solución correcta:
+
+```jsx
+// CORRECTO — import directo del bundle minificado
+import Plotly from 'plotly.js/dist/plotly.min.js'
+
+// Usar Plotly.newPlot() dentro de useEffect(), no createPlotlyComponent()
+useEffect(() => {
+  Plotly.newPlot(divRef.current, traces, layout, config)
+  return () => Plotly.purge(divRef.current)
+}, [puntos])
+```
+
+**No usar** `createPlotlyComponent` de `react-plotly.js` con Vite — produce errores de bundling.
+
+---
+
+## ESTADO ACTUAL (abril 2026)
+
+### Completado y funcional
+- [x] Pipeline RAG completo (extracción, chunking, embedding, búsqueda)
+- [x] API REST con FastAPI (3 endpoints)
+- [x] Interfaz web React con modo ciudadano y técnico
+- [x] Visualización 3D de la base vectorial con PCA
+- [x] Panel técnico RAG en tiempo real (timeline de fases + chunks con similitud)
+- [x] Chat con preguntas sugeridas y cita automática de fuentes
+
+### Pendiente
+- [ ] Despliegue en servidor Hetzner (VPS 46.224.81.240) — el código está listo, falta configurar el servidor para que sirva el frontend compilado (`npm run build`) junto con la API
+- [ ] Sección de administración para subir nuevos PDFs desde la web (sin usar terminal)
+- [ ] Camino B: llamar API Claude/GPT para convertir tablas en texto narrativo antes de vectorizar (resuelve el problema de mismatch de vocabulario en comparativas)
+- [ ] Bloque B completo: detección de fraude en licitaciones con Isolation Forest
 
 ---
 
 ## LIMITACIONES CONOCIDAS
 
-### Limitación crítica — tablas
+### Tablas — vocabulario técnico
 Las tablas se vectorizan como texto con formato "cabecera: valor | cabecera: valor". Funciona para preguntas directas pero falla en:
 - Rankings entre todas las CC.AA. ("cuál tiene mayor presupuesto")
 - Comparativas que cruzan múltiples secciones del documento
-- Causa: mismatch de vocabulario entre términos técnicos del PDF ("empleos no financieros") y lenguaje natural ("presupuesto total")
+- **Causa**: mismatch entre términos técnicos del PDF ("empleos no financieros") y lenguaje natural ("presupuesto total")
 
-**Solución diseñada (Camino B, no implementada)**: llamar API Claude para convertir cada tabla en texto narrativo ANTES de vectorizar. Esto normaliza el vocabulario y resuelve el problema.
+**Solución diseñada — Camino B (no implementada)**: llamar API Claude/GPT para convertir cada tabla en texto narrativo ANTES de vectorizar. Normaliza el vocabulario.
 
-### Limitación — páginas escaneadas
-Páginas 48-50 del PDF principal son imágenes. pdfplumber no extrae texto. Necesitaría OCR (pytesseract) — no implementado.
+### Páginas escaneadas
+Páginas 48-50 del PDF de Madrid son imágenes. pdfplumber no extrae texto. Requeriría OCR (pytesseract) — no implementado.
 
-### Funciona bien
+### Lo que funciona bien
 - Preguntas directas con dato concreto ("cuánto a Sanidad")
-- Comparativas entre 2 comunidades específicas
+- Comparativas entre 2 comunidades específicas mencionadas explícitamente
 - Preguntas de contexto narrativo
 - Cita automática de página fuente en cada respuesta
 
@@ -194,19 +309,19 @@ Detectar contratos públicos españoles con patrones de fraude usando ML no supe
 
 ### Estado actual
 - PLACE API requiere certificado digital → descartada para prototipo
-- Alternativa viable: datos.gob.es — datasets CSV de contratos Ministerio de Hacienda, descarga directa sin auth
-- src/descargador_licitaciones.py es exploración inicial, no integrado en pipeline
+- Alternativa viable: `datos.gob.es` — datasets CSV de contratos del Ministerio de Hacienda, descarga directa sin auth
+- `src/descargador_licitaciones.py` es exploración inicial, no integrado en pipeline
 - Ningún script de Bloque B está operativo todavía
 
 ### Features de fraude planificadas
-- ratio_concentracion: % contratos del organismo que gana esta empresa
-- cerca_umbral: importe entre 45.000-50.000€ (fraccionamiento)
-- baja_concurrencia: menos de 2 licitadores
-- modificado_significativo: modificación > 20% precio original
-- dias_adjudicacion_ratio: velocidad adjudicación vs media
+- `ratio_concentracion`: % contratos del organismo que gana esta empresa
+- `cerca_umbral`: importe entre 45.000-50.000€ (fraccionamiento)
+- `baja_concurrencia`: menos de 2 licitadores
+- `modificado_significativo`: modificación > 20% precio original
+- `dias_adjudicacion_ratio`: velocidad adjudicación vs media
 
 ### Algoritmo central
-Isolation Forest (sklearn.ensemble) — no supervisado, no requiere datos etiquetados, detecta anomalías estadísticas en espacio n-dimensional de features.
+Isolation Forest (`sklearn.ensemble`) — no supervisado, no requiere datos etiquetados, detecta anomalías estadísticas en espacio n-dimensional de features.
 
 ---
 
@@ -220,6 +335,9 @@ Isolation Forest (sklearn.ensemble) — no supervisado, no requiere datos etique
 | Temperature | 0.3 | Conservador — evita inventar cifras en sistema de transparencia |
 | Chunk size | 500 tokens | Equilibrio contexto/precisión del vector |
 | Solapamiento | 50 tokens (10%) | Evita partir frases clave entre chunks |
+| Reducción dimensional | PCA (sklearn) | UMAP incompatible con Python 3.11 — ver decisiones técnicas |
+| Python | 3.11 | 3.14 incompatible con ChromaDB y FastAPI — ver decisiones técnicas |
+| Frontend | React + Vite | Más flexible que Streamlit para la interfaz dual ciudadano/técnico |
 
 ---
 
@@ -228,9 +346,10 @@ Isolation Forest (sklearn.ensemble) — no supervisado, no requiere datos etique
 ### Servidor VPS Hetzner
 - **IP**: 46.224.81.240
 - **Acceso SSH**: `ssh root@46.224.81.240`
-- **Ruta del proyecto**: /root/contratos_licitaciones
+- **Ruta del proyecto**: `/root/contratos_licitaciones`
 - **Estado**: Activo, con venv instalado y todas las dependencias
-- **Configuración**: .env con OPENAI_API_KEY configurada
+- **Configuración**: `.env` con OPENAI_API_KEY configurada
+- **Pendiente**: configurar nginx/caddy para servir frontend compilado + proxy a uvicorn
 
 ### Flujo de actualización
 ```
@@ -239,19 +358,93 @@ git push (local)
 ssh root@46.224.81.240
   ↓
 cd contratos_licitaciones && git pull
+  ↓
+(si hay cambios en frontend) cd frontend && npm run build
+  ↓
+(si hay cambios en backend) pkill uvicorn && bash start_api.sh &
 ```
 
-### Próximo paso pendiente
-Construir `app.py` con Streamlit para interfaz web del chatbot (reemplazar interfaz terminal por web interactiva).
+---
+
+## DESPLIEGUE EN SERVIDOR
+
+**DESPLIEGUE EN SERVIDOR HETZNER (completado abril 2026):**
+
+### Pasos realizados
+1. git pull — bajó 25 archivos nuevos (frontend/ + api/)
+2. Instalación Python 3.11 via deadsnakes PPA:
+   ```
+   apt install software-properties-common -y
+   add-apt-repository ppa:deadsnakes/ppa -y
+   apt update
+   apt install python3.11 python3.11-venv -y
+   ```
+3. Recreación venv con Python 3.11:
+   ```
+   rm -rf venv && python3.11 -m venv venv && venv/bin/pip install -r requirements.txt
+   ```
+4. Instalación Node.js 20 y build del frontend:
+   ```
+   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+   apt install nodejs -y
+   cd frontend && npm install && npm run build && cd ..
+   ```
+5. Instalación y configuración Nginx:
+   ```
+   apt install nginx -y
+   ```
+   Configuración en `/etc/nginx/sites-available/presupuestos`:
+   - `location /` → sirve `frontend/dist/` (archivos estáticos)
+   - `location /api/` → proxy a `localhost:8000` (FastAPI)
+
+6. FastAPI como servicio systemd:
+   - Archivo: `/etc/systemd/system/fastapi.service`
+   - `systemctl enable fastapi && systemctl start fastapi`
+
+7. Permisos: `chmod 755 /root && chmod -R 755 frontend/dist`
+
+### Estado actual del servidor
+- **FastAPI**: activo como servicio systemd, arranca automáticamente al reiniciar
+- **Nginx**: activo, sirve en puerto 80
+- **URL pública**: http://46.224.81.240
+- **PROBLEMA PENDIENTE**: frontend en producción usa `API_BASE = localhost:8000` en lugar de rutas relativas (`/api/`). Hay que cambiar en `ChatPanel.jsx` y `VectorMap.jsx` y recompilar.
+
+### Comandos útiles en el servidor
+```bash
+# Ver logs FastAPI
+journalctl -u fastapi -f
+
+# Reiniciar FastAPI
+systemctl restart fastapi  
+
+# Reiniciar Nginx
+systemctl restart nginx
+
+# Recompilar frontend
+cd /root/contratos_licitaciones/frontend && npm run build
+
+# Ver estado servicios
+systemctl status fastapi && systemctl status nginx
+```
+
+---
+
+## PROBLEMAS RESUELTOS — HISTORIAL
+
+| Error | Causa | Solución |
+|-------|-------|---------|
+| `ModuleNotFoundError: pkg_resources` al importar umap-learn | umap-learn 0.5.x depende de setuptools antiguo, eliminado en Python 3.11 | Reemplazar UMAP por PCA de scikit-learn en `api/server.py` |
+| ChromaDB y FastAPI fallan con Python 3.14.3 | 3.14 aún en desarrollo, dependencias nativas sin soporte | Recrear venv con `/opt/homebrew/bin/python3.11` |
+| `react-plotly.js` da error de bundling con Vite | `createPlotlyComponent()` accede al DOM en tiempo de import | Importar `plotly.js/dist/plotly.min.js` directamente y usar `Plotly.newPlot()` en `useEffect()` |
+| `python`/`python3` en terminal no encuentra librerías del proyecto | Claude Code o macOS apunta al Python global de Homebrew | Usar siempre `venv/bin/python` y `venv/bin/pip` de forma explícita |
+| Frontend en puerto distinto al esperado | Si 5173 está ocupado, Vite auto-incrementa a 5174 | Normal — el puerto configurado es 5173, usar el que muestre Vite al arrancar |
 
 ---
 
 ## PRÓXIMOS PASOS IDENTIFICADOS
 
-1. Descargar dataset CSV de contratos de datos.gob.es
-2. Construir src/limpiador.py (procesamiento Bloque B — parte Gines)
-3. Implementar Camino B para tablas (API Claude normaliza antes de vectorizar)
-4. Interfaz web con Streamlit (pasar chatbot de terminal a web)
-5. Despliegue en VPS (Hetzner ~4€/mes) para funcionamiento 24/7
-
-
+1. Despliegue en VPS Hetzner: compilar frontend (`npm run build`) y configurar proxy inverso (nginx)
+2. Sección administración: formulario web para subir PDFs sin usar terminal
+3. Camino B — tablas: usar Claude API para narrativizar tablas antes de vectorizar
+4. Bloque B: descargar dataset CSV de contratos de `datos.gob.es` y construir `src/limpiador.py` (parte de Gines)
+5. Bloque B: Feature engineering + Isolation Forest

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Plotly from 'plotly.js/dist/plotly.min.js'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = '/api'
 
 const DOC_COLORS = {
   'presupuestos_generales_2026.pdf': '#3b82f6',

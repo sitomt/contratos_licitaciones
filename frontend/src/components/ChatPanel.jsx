@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = '/api'
 
 const IconSend = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
