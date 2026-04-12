@@ -60,6 +60,9 @@ pipeline.py detecta si un PDF ya está en ChromaDB por fuente. Si existe → sal
 
 ```
 Isdi-presupuestos_estado/
+├── api/
+│   ├── __init__.py
+│   └── server.py         ← FastAPI — endpoints /chat /vectores /health
 ├── data/
 │   ├── raw/              ← PDFs fuente (nunca modificar)
 │   ├── processed/        ← JSONs intermedios (regenerables)
@@ -72,9 +75,64 @@ Isdi-presupuestos_estado/
 │   ├── procesador_tablas.py ← script debug inspección tablas
 │   └── descargador_licitaciones.py ← prototipo Bloque B
 ├── pipeline.py           ← orquestador Bloque A
+├── start_api.sh          ← arranca uvicorn en puerto 8000
 ├── .env                  ← OPENAI_API_KEY (nunca a Git)
 ├── .gitignore            ← venv/, __pycache__/, .env
 └── requirements.txt      ← todas las dependencias con versiones
+```
+
+---
+
+## API REST (Bloque A — capa backend)
+
+### Stack
+- **Framework**: FastAPI 0.115
+- **Servidor**: Uvicorn (ASGI), puerto 8000
+- **CORS**: allow_origins=["*"] (acepta localhost:3000 y producción)
+- **Arranque**: `bash start_api.sh` (o `source venv/bin/activate && uvicorn api.server:app --reload --port 8000`)
+
+### Endpoints
+
+#### POST /chat
+Responde preguntas sobre presupuestos usando el pipeline RAG completo.
+
+**Request**
+```json
+{ "pregunta": "¿Cuánto destina Madrid a Sanidad?", "historial": [] }
+```
+
+**Response**
+```json
+{
+  "respuesta": "Texto generado por GPT-4o-mini...",
+  "chunks": [
+    { "texto": "...", "fuente": "presupuestos_generales_2026.pdf", "pagina": 12, "distancia": 0.23 }
+  ]
+}
+```
+
+**Lógica**: embed pregunta → ChromaDB top-6 → prompt + GPT-4o-mini (temperature=0.3)
+
+#### GET /vectores
+Devuelve todos los vectores de ChromaDB reducidos a 3D con UMAP (para visualización).
+
+**Response**
+```json
+{
+  "puntos": [
+    { "x": 1.23, "y": -0.45, "z": 2.11, "texto": "...", "fuente": "...", "pagina": 5 }
+  ]
+}
+```
+
+**Nota**: primera llamada tarda ~10s (UMAP procesa 543 vectores 1536d → 3d).
+
+#### GET /health
+Comprueba que el servidor y ChromaDB están operativos.
+
+**Response**
+```json
+{ "status": "ok", "vectores": 543 }
 ```
 
 ---
