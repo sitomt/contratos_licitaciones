@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import pdfplumber
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -9,6 +10,9 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 chroma = chromadb.PersistentClient(path="data/vectordb")
 coleccion = chroma.get_or_create_collection(name="presupuestos")
+
+MODELO_NARRATIVIZADOR = "gpt-4o"
+PAUSA_ENTRE_LLAMADAS = 0.5
 
 def extraer(ruta_pdf):
     paginas = []
@@ -74,6 +78,65 @@ def chunkear(paginas):
 
     return chunks
 
+def narrativizar_tabla(texto_tabla, pagina, fuente):
+    prompt = f"""Eres un experto en presupuestos públicos españoles.
+Tienes delante los datos de una tabla extraída de un documento presupuestario oficial.
+Tu tarea es convertir esos datos en texto narrativo en español, claro y completo.
+
+Reglas:
+- Menciona explícitamente todas las cifras y conceptos de la tabla
+- Usa lenguaje natural, como si explicaras el presupuesto a un ciudadano
+- No inventes datos que no estén en la tabla
+- No uses formato de lista ni bullets, solo prosa continua
+- El texto debe ser rico en vocabulario para facilitar búsquedas semánticas
+
+Datos de la tabla (página {pagina} de {fuente}):
+{texto_tabla}
+
+Escribe el texto narrativo:"""
+
+    respuesta = client.chat.completions.create(
+        model=MODELO_NARRATIVIZADOR,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=500
+    )
+    return respuesta.choices[0].message.content.strip()
+
+def narrativizar_chunks(chunks):
+    chunks_narrativizados = []
+    total_tablas = len([c for c in chunks if c["tipo"] == "tabla"])
+    tablas_procesadas = 0
+
+    print(f"   Narrativizando {total_tablas} tablas con GPT-4o...")
+
+    for chunk in chunks:
+        if chunk["tipo"] == "texto":
+            chunks_narrativizados.append(chunk)
+            continue
+
+        try:
+            texto_narrativo = narrativizar_tabla(
+                chunk["texto"],
+                chunk["pagina"],
+                chunk["fuente"]
+            )
+            chunks_narrativizados.append({
+                "texto": texto_narrativo,
+                "pagina": chunk["pagina"],
+                "fuente": chunk["fuente"],
+                "tipo": "tabla_narrativizada"
+            })
+            tablas_procesadas += 1
+            print(f"   Tabla {tablas_procesadas}/{total_tablas} narrativizada (página {chunk['pagina']})")
+            time.sleep(PAUSA_ENTRE_LLAMADAS)
+
+        except Exception as e:
+            print(f"   ERROR narrativizando tabla página {chunk['pagina']}: {e}")
+            chunks_narrativizados.append(chunk)
+
+    return chunks_narrativizados
+
 def vectorizar(chunks, fuente):
     existentes = coleccion.get(where={"fuente": fuente})
     if existentes and len(existentes["ids"]) > 0:
@@ -123,20 +186,24 @@ def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
         print(f"   Ya está en datos_extraidos.json — saltando extracción")
         paginas = [e for e in datos_json if e["fuente"] == ruta_pdf]
     else:
-        print(f"Extrayendo texto y tablas...")
+        print(f"   Extrayendo texto y tablas...")
         paginas = extraer(ruta_pdf)
         datos_json.extend(paginas)
         guardar_json(datos_json)
         fuentes_procesadas.add(ruta_pdf)
         print(f"   {len(paginas)} páginas añadidas a datos_extraidos.json")
 
-    print(f"Generando chunks...")
+    print(f"   Generando chunks...")
     chunks = chunkear(paginas)
-    print(f"Chunks generados: {len(chunks)}")
+    print(f"   Chunks generados: {len(chunks)}")
 
-    print(f"Vectorizando y subiendo a ChromaDB...")
-    vectorizar(chunks, ruta_pdf)
-    print(f"Listo.")
+    print(f"   Narrativizando tablas...")
+    chunks_narrativizados = narrativizar_chunks(chunks)
+    print(f"   Chunks narrativizados: {len(chunks_narrativizados)}")
+
+    print(f"   Vectorizando y subiendo a ChromaDB...")
+    vectorizar(chunks_narrativizados, ruta_pdf)
+    print(f"   Listo.")
 
 def main():
     pdfs = [f for f in os.listdir("data/raw") if f.endswith(".pdf")]
@@ -148,10 +215,7 @@ def main():
     datos_json = cargar_json_existente()
     fuentes_procesadas = fuentes_en_json(datos_json)
     print(f"PDFs en datos_extraidos.json: {len(fuentes_procesadas)}")
-
     print(f"PDFs encontrados en data/raw: {len(pdfs)}")
-    nuevos = [f for f in pdfs if f"data/raw/{f}" not in fuentes_procesadas]
-    print(f"PDFs nuevos a procesar: {len(nuevos)}")
 
     for pdf in pdfs:
         ruta = f"data/raw/{pdf}"

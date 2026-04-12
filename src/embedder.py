@@ -16,7 +16,7 @@ def generar_embedding(texto):
     return respuesta.data[0].embedding
 
 def procesar_embeddings():
-    with open("data/processed/chunks.json", "r", encoding="utf-8") as f:
+    with open("data/processed/chunks_narrativizados.json", "r", encoding="utf-8") as f:
         chunks = json.load(f)
 
     chroma = chromadb.PersistentClient(path="data/vectordb")

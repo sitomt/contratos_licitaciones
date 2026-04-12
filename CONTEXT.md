@@ -19,7 +19,8 @@ Sistema RAG de transparencia pública con dos bloques:
 | PDF extraction | pdfplumber | — |
 | Embeddings | OpenAI text-embedding-3-small | vectores 1536d |
 | Vector store | ChromaDB local | `data/vectordb/` (sqlite3) |
-| LLM | GPT-4o-mini | temperature=0.3 |
+| LLM chatbot | GPT-4o-mini | temperature=0.3, cada query |
+| LLM narrativizador | GPT-4o | ejecución única al procesar PDFs — convierte tablas a prosa |
 | Reducción dim. | PCA (sklearn) | reemplazó a UMAP — ver decisiones técnicas |
 | Backend | FastAPI 0.115 + Uvicorn | puerto 8000 |
 | Frontend | React 19 + Vite 8 + Tailwind 4 | puerto 5173 (o 5174 si está ocupado) |
@@ -36,9 +37,10 @@ Sistema RAG de transparencia pública con dos bloques:
 ### Pipeline offline (`pipeline.py` orquesta todo)
 ```
 data/raw/*.pdf
-  → src/extractor.py      → data/processed/datos_extraidos.json
-  → src/chunker.py        → data/processed/chunks.json
-  → src/embedder.py       → data/vectordb/ (ChromaDB)
+  → src/extractor.py        → data/processed/datos_extraidos.json
+  → src/chunker.py          → data/processed/chunks.json
+  → src/narrativizador.py   → data/processed/chunks_narrativizados.json  (chunks tipo tabla → prosa con GPT-4o)
+  → src/embedder.py         → data/vectordb/ (ChromaDB)
 ```
 
 ### Pipeline online (`src/chatbot.py` CLI / `api/server.py` HTTP)
@@ -55,7 +57,7 @@ pregunta usuario
 - Solapamiento: 50 tokens (10%)
 - Tablas: 1 chunk por tabla completa (cabecera+filas como "col: valor | col: valor")
 - Chunks recuperados en query: n=6
-- Total vectores actuales: **543**
+- Total vectores actuales: **543** (239 tablas narrativizadas con GPT-4o + 304 chunks de texto plano)
 
 ### Documentos indexados
 | Fichero | Descripción | Páginas |
@@ -94,7 +96,8 @@ Isdi-presupuestos/
 ├── src/
 │   ├── extractor.py           ← pdfplumber → JSON
 │   ├── chunker.py             ← JSON → chunks con solapamiento
-│   ├── embedder.py            ← chunks → vectores ChromaDB
+│   ├── narrativizador.py      ← chunks tipo tabla → texto narrativo en prosa con GPT-4o (→ chunks_narrativizados.json)
+│   ├── embedder.py            ← chunks_narrativizados.json → vectores ChromaDB
 │   ├── chatbot.py             ← interfaz conversacional terminal (legacy)
 │   ├── procesador_tablas.py   ← script debug/inspección de tablas
 │   └── descargador_licitaciones.py ← prototipo Bloque B (no integrado)
@@ -266,11 +269,14 @@ useEffect(() => {
 - [x] Visualización 3D de la base vectorial con PCA
 - [x] Panel técnico RAG en tiempo real (timeline de fases + chunks con similitud)
 - [x] Chat con preguntas sugeridas y cita automática de fuentes
+- [x] Despliegue en VPS Hetzner — Nginx sirve frontend compilado, FastAPI como servicio systemd
+- [x] Camino B — narrativizador de tablas: `src/narrativizador.py` convierte las 239 tablas a prosa con GPT-4o antes de vectorizar
 
 ### Pendiente
-- [ ] Despliegue en servidor Hetzner (VPS 46.224.81.240) — el código está listo, falta configurar el servidor para que sirva el frontend compilado (`npm run build`) junto con la API
+- [ ] **URGENTE — reconstruir base de datos vectorial**: la BD actual mezcla vectores narrativizados y no narrativizados (pipeline detectó solo 1 doc nuevo y lo narrativizó; los docs anteriores siguen vectorizados sin narrativización). Solución: borrar `data/vectordb/` y re-ejecutar `pipeline.py` completo desde cero.
 - [ ] Sección de administración para subir nuevos PDFs desde la web (sin usar terminal)
-- [ ] Camino B: llamar API Claude/GPT para convertir tablas en texto narrativo antes de vectorizar (resuelve el problema de mismatch de vocabulario en comparativas)
+- [ ] Interfaces más gráficas: mejorar visualizaciones, dashboards y UX general
+- [ ] Modalidad de audio con transcripción — poder hablar al chat (Web Speech API o Whisper)
 - [ ] Bloque B completo: detección de fraude en licitaciones con Isolation Forest
 
 ---
@@ -347,9 +353,9 @@ Isolation Forest (`sklearn.ensemble`) — no supervisado, no requiere datos etiq
 - **IP**: 46.224.81.240
 - **Acceso SSH**: `ssh root@46.224.81.240`
 - **Ruta del proyecto**: `/root/contratos_licitaciones`
-- **Estado**: Activo, con venv instalado y todas las dependencias
+- **Estado**: Activo y en producción — Nginx sirviendo frontend compilado + proxy a FastAPI en systemd
 - **Configuración**: `.env` con OPENAI_API_KEY configurada
-- **Pendiente**: configurar nginx/caddy para servir frontend compilado + proxy a uvicorn
+- **URL pública**: http://46.224.81.240
 
 ### Flujo de actualización
 ```
@@ -407,7 +413,7 @@ cd contratos_licitaciones && git pull
 - **FastAPI**: activo como servicio systemd, arranca automáticamente al reiniciar
 - **Nginx**: activo, sirve en puerto 80
 - **URL pública**: http://46.224.81.240
-- **PROBLEMA PENDIENTE**: frontend en producción usa `API_BASE = localhost:8000` en lugar de rutas relativas (`/api/`). Hay que cambiar en `ChatPanel.jsx` y `VectorMap.jsx` y recompilar.
+- **API_BASE**: corregido a rutas relativas (`/api/`) en `ChatPanel.jsx` y `VectorMap.jsx` — ya recompilado y desplegado.
 
 ### Comandos útiles en el servidor
 ```bash
@@ -443,8 +449,9 @@ systemctl status fastapi && systemctl status nginx
 
 ## PRÓXIMOS PASOS IDENTIFICADOS
 
-1. Despliegue en VPS Hetzner: compilar frontend (`npm run build`) y configurar proxy inverso (nginx)
+1. **URGENTE**: reconstruir base de datos vectorial — borrar `data/vectordb/` y re-ejecutar `pipeline.py` completo para que todos los documentos queden vectorizados con narrativización de tablas
 2. Sección administración: formulario web para subir PDFs sin usar terminal
-3. Camino B — tablas: usar Claude API para narrativizar tablas antes de vectorizar
-4. Bloque B: descargar dataset CSV de contratos de `datos.gob.es` y construir `src/limpiador.py` (parte de Gines)
-5. Bloque B: Feature engineering + Isolation Forest
+3. Interfaces más gráficas: mejorar visualizaciones, dashboards y UX general
+4. Modalidad de audio con transcripción: poder hablar al chat (Web Speech API o Whisper)
+5. Bloque B: descargar dataset CSV de contratos de `datos.gob.es` y construir `src/limpiador.py` (parte de Gines)
+6. Bloque B: Feature engineering + Isolation Forest
