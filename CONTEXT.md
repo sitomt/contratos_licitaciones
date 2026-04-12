@@ -82,8 +82,14 @@ Isdi-presupuestos_estado/
 ## COMANDOS CLAVE
 
 ```bash
-# Ejecutar chatbot
-venv/bin/python src/chatbot.py
+# Conectar al servidor
+ssh root@46.224.81.240
+
+# Actualizar servidor tras push
+cd contratos_licitaciones && git pull
+
+# Ejecutar chatbot en local
+venv/bin/python3 src/chatbot.py
 
 # Reindexar (añadir PDFs nuevos a data/raw/ primero)
 venv/bin/python pipeline.py
@@ -156,6 +162,29 @@ Isolation Forest (sklearn.ensemble) — no supervisado, no requiere datos etique
 | Temperature | 0.3 | Conservador — evita inventar cifras en sistema de transparencia |
 | Chunk size | 500 tokens | Equilibrio contexto/precisión del vector |
 | Solapamiento | 50 tokens (10%) | Evita partir frases clave entre chunks |
+
+---
+
+## INFRAESTRUCTURA
+
+### Servidor VPS Hetzner
+- **IP**: 46.224.81.240
+- **Acceso SSH**: `ssh root@46.224.81.240`
+- **Ruta del proyecto**: /root/contratos_licitaciones
+- **Estado**: Activo, con venv instalado y todas las dependencias
+- **Configuración**: .env con OPENAI_API_KEY configurada
+
+### Flujo de actualización
+```
+git push (local)
+  ↓
+ssh root@46.224.81.240
+  ↓
+cd contratos_licitaciones && git pull
+```
+
+### Próximo paso pendiente
+Construir `app.py` con Streamlit para interfaz web del chatbot (reemplazar interfaz terminal por web interactiva).
 
 ---
 
