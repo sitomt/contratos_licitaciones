@@ -5,6 +5,7 @@ import pdfplumber
 from openai import OpenAI
 from dotenv import load_dotenv
 import chromadb
+from src.normalizador import normalizar_texto
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -197,6 +198,10 @@ def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
     chunks = chunkear(paginas)
     print(f"   Chunks generados: {len(chunks)}")
 
+    for chunk in chunks:
+        if chunk["tipo"] == "texto":
+            chunk["texto"] = normalizar_texto(chunk["texto"])
+
     print(f"   Narrativizando tablas...")
     chunks_narrativizados = narrativizar_chunks(chunks)
     print(f"   Chunks narrativizados: {len(chunks_narrativizados)}")
@@ -227,3 +232,6 @@ def main():
     print(f"Total vectores en base de datos: {total}")
 
 main()
+
+# PENDIENTE: ejecutar pipeline completo para re-vectorizar
+# con texto normalizado

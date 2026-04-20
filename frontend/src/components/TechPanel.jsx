@@ -26,9 +26,8 @@ function getDocShortName(fuente) {
 }
 
 function ScoreBar({ score }) {
-  // distance lower = more similar, display as similarity = 1 - distance (clamped)
-  const sim = Math.max(0, Math.min(1, 1 - score))
-  const pct = Math.round(sim * 100)
+  // ChromaDB cosine distances range 0-2; similarity = (2 - distance) / 2 * 100
+  const pct = Math.round(Math.max(0, Math.min(100, (2 - score) / 2 * 100)))
   const color = pct > 80 ? '#10b981' : pct > 60 ? '#3b82f6' : '#f59e0b'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>

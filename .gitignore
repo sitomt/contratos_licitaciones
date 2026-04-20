@@ -6,3 +6,4 @@ __pycache__/
 .DS_Store
 data/vectordb/
 data/processed/datos_extraidos.json
+data/logs/*.db

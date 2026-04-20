@@ -271,6 +271,13 @@ useEffect(() => {
 - [x] Chat con preguntas sugeridas y cita automática de fuentes
 - [x] Despliegue en VPS Hetzner — Nginx sirve frontend compilado, FastAPI como servicio systemd
 - [x] Camino B — narrativizador de tablas: `src/narrativizador.py` convierte las 239 tablas a prosa con GPT-4o antes de vectorizar
+- [x] Logging anónimo de conversaciones en SQLite (`data/logs/conversaciones.db`)
+- [x] Banner de aviso legal en el frontend
+- [x] Citas de fuente con documento y página al pie de cada respuesta
+- [x] HyDE implementado en endpoint /chat para mejorar similitud de búsqueda
+- [x] Nombres de documentos legibles en citas de fuente
+- [x] Fórmula de similitud coseno unificada: (2-dist)/2*100
+- [x] Normalizador de texto plano: `src/normalizador.py`
 
 ### Pendiente
 - [ ] **URGENTE — reconstruir base de datos vectorial**: la BD actual mezcla vectores narrativizados y no narrativizados (pipeline detectó solo 1 doc nuevo y lo narrativizó; los docs anteriores siguen vectorizados sin narrativización). Solución: borrar `data/vectordb/` y re-ejecutar `pipeline.py` completo desde cero.
@@ -278,6 +285,7 @@ useEffect(() => {
 - [ ] Interfaces más gráficas: mejorar visualizaciones, dashboards y UX general
 - [ ] Modalidad de audio con transcripción — poder hablar al chat (Web Speech API o Whisper)
 - [ ] Bloque B completo: detección de fraude en licitaciones con Isolation Forest
+- [ ] Re-vectorizar los tres PDFs con pipeline completo para que la normalización de texto plano entre en ChromaDB
 
 ---
 
@@ -288,6 +296,8 @@ Las tablas se vectorizan como texto con formato "cabecera: valor | cabecera: val
 - Rankings entre todas las CC.AA. ("cuál tiene mayor presupuesto")
 - Comparativas que cruzan múltiples secciones del documento
 - **Causa**: mismatch entre términos técnicos del PDF ("empleos no financieros") y lenguaje natural ("presupuesto total")
+
+**Mitigación implementada — HyDE**: el endpoint /chat genera un fragmento hipotético de documento oficial antes de embeddar, usando vocabulario técnico presupuestario. Reduce el mismatch pero no lo elimina completamente, ya que la hipótesis puede no cubrir todos los términos del dominio.
 
 **Solución diseñada — Camino B (no implementada)**: llamar API Claude/GPT para convertir cada tabla en texto narrativo ANTES de vectorizar. Normaliza el vocabulario.
 
@@ -344,6 +354,10 @@ Isolation Forest (`sklearn.ensemble`) — no supervisado, no requiere datos etiq
 | Reducción dimensional | PCA (sklearn) | UMAP incompatible con Python 3.11 — ver decisiones técnicas |
 | Python | 3.11 | 3.14 incompatible con ChromaDB y FastAPI — ver decisiones técnicas |
 | Frontend | React + Vite | Más flexible que Streamlit para la interfaz dual ciudadano/técnico |
+| HyDE | Embeddar respuesta hipotética en lugar de pregunta original | Mejora similitud coseno entre query y chunks al usar vocabulario técnico del dominio |
+| Logging SQLite | `data/logs/conversaciones.db` excluido de git | Datos de servidor y local son distintos; fichero binario mutable |
+| Similitud coseno | (2-distancia)/2*100 | ChromaDB devuelve distancias 0-2, no 0-1. Esta fórmula da porcentaje real |
+| Normalización texto | Python puro antes del chunking | Limpia artefactos del PDF sin coste de API. Solo tablas usan GPT-4o (Camino B) |
 
 ---
 
@@ -436,6 +450,21 @@ systemctl status fastapi && systemctl status nginx
 ---
 
 ## PROBLEMAS RESUELTOS — HISTORIAL
+
+**2026-04-20 — Nombres legibles, similitud coseno corregida y normalizador de texto**
+
+- **Nombres de documento legibles** (`api/server.py`): añadido diccionario `NOMBRES_DOCUMENTOS` que mapea el nombre del fichero PDF al nombre legible. El campo `fuentes[].documento` en la respuesta JSON y en SQLite ahora muestra p.ej. "Presupuestos Generales Madrid 2026" en lugar de "presupuestos_generales_2026.pdf". Fallback: nombre del fichero sin extensión.
+- **Fórmula de similitud unificada** (`api/server.py` + `TechPanel.jsx`): ChromaDB coseno devuelve distancias 0-2, no 0-1. Corregida la fórmula de `1 - distance` a `(2 - distance) / 2 * 100` en `ScoreBar` de TechPanel. En el backend, `score_medio` se guarda ahora como porcentaje real (0-100) y se añade `score_similitud_media` al JSON de respuesta.
+- **Normalizador de texto plano** (`src/normalizador.py` + `pipeline.py`): nuevo módulo con función `normalizar_texto()` que elimina guiones de fin de línea, colapsa espacios, elimina puntos suspensivos, quita líneas de número de página y cabeceras repetitivas, y une líneas que no terminan en puntuación. Aplicado en `pipeline.py` sobre chunks de tipo "texto" tras el chunking. Requiere re-vectorizar para que los chunks normalizados entren en ChromaDB.
+
+**2026-04-20 — Logging, HyDE, banner legal y citas de fuente**
+
+Implementados simultáneamente en una sesión:
+- **HyDE** (`api/server.py`): antes de embeddar la pregunta se genera un fragmento hipotético de documento oficial con GPT-4o-mini (max_tokens=200, prompt estilo administrativo), y ese fragmento es el que se embeda. El resto del pipeline RAG es idéntico.
+- **Logging SQLite** (`api/server.py` + `data/logs/`): cada conversación se registra en `data/logs/conversaciones.db` con sesion_id anónimo (UUID), timestamp, pregunta, hipótesis HyDE, respuesta, score medio de similitud, núm. de chunks y fuentes JSON. La DB está excluida de git.
+- **sesion_id anónimo** (`ChatPanel.jsx`): se genera un UUID con `crypto.randomUUID()` al montar el componente (lazy initializer de useState) y se incluye en cada POST /chat. No se persiste en storage.
+- **Banner aviso legal** (`ChatPanel.jsx`): banner amarillo tenue al tope del panel de chat, con dos líneas de texto legal y botón ✕ para cerrar. Estado local, no persistido.
+- **Citas de fuente** (`api/server.py` + `ChatPanel.jsx`): el backend deduplica chunks por documento y devuelve `fuentes: [{documento, paginas: [...]}]`. El frontend añade `fuentes` al objeto mensaje del asistente y lo renderiza al pie de cada burbuja con formato "📄 documento, p. X, Y".
 
 | Error | Causa | Solución |
 |-------|-------|---------|

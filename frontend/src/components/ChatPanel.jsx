@@ -106,6 +106,22 @@ function MessageBubble({ msg }) {
             Error de conexión con el servidor
           </div>
         )}
+        {!isUser && msg.fuentes?.length > 0 && (
+          <div style={{
+            marginTop: 10,
+            paddingTop: 8,
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}>
+            {msg.fuentes.map((f, i) => (
+              <div key={i} style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                📄 {f.documento}, p. {f.paginas.join(', ')}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -192,6 +208,8 @@ function WelcomeScreen({ onSuggest }) {
 
 export default function ChatPanel({ messages, isLoading, mode, onNewMessage, onChunksUpdate, onLoadingChange }) {
   const [input, setInput] = useState('')
+  const [sesionId] = useState(() => crypto.randomUUID())
+  const [bannerVisible, setBannerVisible] = useState(true)
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
 
@@ -218,7 +236,7 @@ export default function ChatPanel({ messages, isLoading, mode, onNewMessage, onC
       const res = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pregunta: q, historial }),
+        body: JSON.stringify({ pregunta: q, historial, sesion_id: sesionId }),
       })
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -227,7 +245,7 @@ export default function ChatPanel({ messages, isLoading, mode, onNewMessage, onC
       const data = await res.json()
 
       onChunksUpdate(data.chunks || [])
-      onNewMessage({ role: 'assistant', content: data.respuesta })
+      onNewMessage({ role: 'assistant', content: data.respuesta, fuentes: data.fuentes || [] })
     } catch (err) {
       onNewMessage({
         role: 'assistant',
@@ -251,6 +269,41 @@ export default function ChatPanel({ messages, isLoading, mode, onNewMessage, onC
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Banner aviso legal */}
+      {bannerVisible && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 12,
+          padding: '10px 16px',
+          background: 'rgba(161, 128, 50, 0.15)',
+          borderBottom: '1px solid rgba(202, 162, 60, 0.35)',
+          flexShrink: 0,
+        }}>
+          <div style={{ fontSize: 12, color: 'rgba(220, 190, 100, 0.9)', lineHeight: 1.6 }}>
+            <div>Las conversaciones se almacenan de forma anónima para mejorar el servicio.</div>
+            <div>La información proporcionada procede de documentos públicos oficiales. El uso que el usuario haga de dicha información es de su exclusiva responsabilidad.</div>
+          </div>
+          <button
+            onClick={() => setBannerVisible(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'rgba(220, 190, 100, 0.7)',
+              cursor: 'pointer',
+              fontSize: 16,
+              lineHeight: 1,
+              flexShrink: 0,
+              padding: '2px 4px',
+            }}
+            aria-label="Cerrar aviso"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Messages area */}
       <div style={{
         flex: 1,
