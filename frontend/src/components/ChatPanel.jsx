@@ -206,9 +206,16 @@ function WelcomeScreen({ onSuggest }) {
   )
 }
 
+const generarUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+};
+
 export default function ChatPanel({ messages, isLoading, mode, onNewMessage, onChunksUpdate, onLoadingChange }) {
   const [input, setInput] = useState('')
-  const [sesionId] = useState(() => crypto.randomUUID())
+  const [sesionId] = useState(() => generarUUID())
   const [bannerVisible, setBannerVisible] = useState(true)
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
