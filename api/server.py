@@ -36,6 +36,20 @@ NOMBRES_DOCUMENTOS = {
 }
 
 DB_PATH = "data/logs/conversaciones.db"
+RUTA_EJEMPLOS_HYDE = "data/processed/ejemplos_hyde.json"
+
+
+def cargar_ejemplos_hyde():
+    if os.path.exists(RUTA_EJEMPLOS_HYDE):
+        with open(RUTA_EJEMPLOS_HYDE, "r", encoding="utf-8") as f:
+            datos = json.load(f)
+        todos = []
+        for frases in datos.values():
+            todos.extend(frases)
+        return todos[:20]
+    return []
+
+EJEMPLOS_HYDE = cargar_ejemplos_hyde()
 
 
 def init_db():
@@ -78,6 +92,13 @@ def chat(req: ChatRequest):
     if not req.pregunta.strip():
         raise HTTPException(status_code=400, detail="La pregunta no puede estar vacía")
 
+    # Construir bloque de ejemplos para el prompt de HyDE
+    if EJEMPLOS_HYDE:
+        bloque_ejemplos = "\n".join(f"- {e}" for e in EJEMPLOS_HYDE)
+        ejemplos_texto = f"\n\nEjemplos del estilo y vocabulario real de los documentos indexados:\n{bloque_ejemplos}"
+    else:
+        ejemplos_texto = ""
+
     # HyDE: generar fragmento hipotético para mejorar similitud de búsqueda
     hyde_resp = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -86,16 +107,19 @@ def chat(req: ChatRequest):
                 "role": "system",
                 "content": (
                     "Eres un redactor de documentos oficiales de presupuestos públicos españoles. "
-                    "Genera un fragmento de texto que podría aparecer en un documento oficial de "
-                    "presupuestos de una Comunidad Autónoma o del Estado español.\n\n"
+                    "Genera un fragmento de texto que podría aparecer literalmente en un documento oficial de "
+                    "presupuestos de una Comunidad Autónoma española.\n\n"
                     "Reglas estrictas:\n"
-                    "- Usa vocabulario técnico presupuestario español (capítulos, programas, "
-                    "dotaciones, créditos, transferencias)\n"
+                    "- Usa EXACTAMENTE el mismo vocabulario y estilo que aparece en los ejemplos proporcionados\n"
+                    "- Usa terminología oficial: empleos no financieros, dotaciones, capítulos, programas, "
+                    "transferencias corrientes, créditos centralizados, Fondo de Garantía de los Servicios "
+                    "Públicos Fundamentales, tasa de variación presupuesto\n"
                     "- NO incluyas cifras numéricas concretas\n"
                     "- Escribe en tercera persona, estilo administrativo formal\n"
                     "- Máximo 3 frases\n"
                     "- NO expliques, NO respondas en primera persona, NO uses lenguaje conversacional\n"
-                    "- El texto debe parecer extraído directamente de un PDF oficial"
+                    "- El texto debe parecer extraído directamente de un PDF oficial español"
+                    f"{ejemplos_texto}"
                 )
             },
             {

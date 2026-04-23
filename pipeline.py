@@ -14,21 +14,39 @@ coleccion = chroma.get_or_create_collection(name="presupuestos")
 
 MODELO_NARRATIVIZADOR = "gpt-4o"
 PAUSA_ENTRE_LLAMADAS = 0.5
+MAX_COLUMNAS_TABLA = 15
+RUTA_JSON = "data/processed/datos_extraidos.json"
+RUTA_EJEMPLOS_HYDE = "data/processed/ejemplos_hyde.json"
+
 
 def extraer(ruta_pdf):
     paginas = []
     with pdfplumber.open(ruta_pdf) as pdf:
         for numero, pagina in enumerate(pdf.pages):
             texto = pagina.extract_text()
-            tablas = pagina.extract_tables()
+            tablas_raw = pagina.extract_tables()
+
+            tablas_limpias = []
+            for tabla in (tablas_raw or []):
+                filas_validas = [
+                    fila for fila in tabla
+                    if any(c for c in fila if c and str(c).strip())
+                ]
+                if len(filas_validas) < 2:
+                    continue
+                if len(filas_validas[0]) > MAX_COLUMNAS_TABLA:
+                    continue
+                tablas_limpias.append(filas_validas)
+
             paginas.append({
                 "pagina": numero + 1,
                 "fuente": ruta_pdf,
                 "texto": texto if texto else "",
-                "tablas": tablas if tablas else [],
+                "tablas": tablas_limpias,
                 "tipo": "texto" if texto else "imagen_sin_texto"
             })
     return paginas
+
 
 def chunkear(paginas):
     TAMANO = 500
@@ -38,9 +56,10 @@ def chunkear(paginas):
     for pagina in paginas:
         numero = pagina["pagina"]
         fuente = pagina["fuente"]
+        texto_pagina = pagina["texto"]
 
-        if pagina["texto"]:
-            palabras = pagina["texto"].split()
+        if texto_pagina:
+            palabras = texto_pagina.split()
             inicio = 0
             while inicio < len(palabras):
                 fin = inicio + TAMANO
@@ -74,35 +93,44 @@ def chunkear(paginas):
                     "texto": "\n".join(lineas),
                     "pagina": numero,
                     "fuente": fuente,
-                    "tipo": "tabla"
+                    "tipo": "tabla",
+                    "texto_pagina": texto_pagina
                 })
 
     return chunks
 
-def narrativizar_tabla(texto_tabla, pagina, fuente):
-    prompt = f"""Eres un experto en presupuestos públicos españoles.
-Tienes delante los datos de una tabla extraída de un documento presupuestario oficial.
-Tu tarea es convertir esos datos en texto narrativo en español, claro y completo.
 
-Reglas:
-- Menciona explícitamente todas las cifras y conceptos de la tabla
-- Usa lenguaje natural, como si explicaras el presupuesto a un ciudadano
-- No inventes datos que no estén en la tabla
-- No uses formato de lista ni bullets, solo prosa continua
-- El texto debe ser rico en vocabulario para facilitar búsquedas semánticas
+def narrativizar_tabla(texto_tabla, pagina, fuente, texto_pagina=""):
+    prompt = f"""Eres un redactor de documentos oficiales de presupuestos públicos españoles.
+Tienes delante los datos de una tabla extraída de un documento presupuestario oficial y el texto de la página donde aparece esa tabla.
 
-Datos de la tabla (página {pagina} de {fuente}):
+TEXTO COMPLETO DE LA PÁGINA (úsalo para identificar la comunidad autónoma, el año, las unidades monetarias y el tema):
+{texto_pagina[:800] if texto_pagina else "No disponible"}
+
+DATOS DE LA TABLA (página {pagina} de {fuente}):
 {texto_tabla}
+
+Tu tarea es convertir los datos de la tabla en texto narrativo en español.
+
+Reglas estrictas:
+- Usa EXACTAMENTE la misma terminología que aparece en el texto de la página y en la tabla. Si el documento dice "empleos no financieros", usa esa expresión exacta, no "gasto total". Si dice "dotación presupuestaria", usa "dotación presupuestaria".
+- Menciona siempre y explícitamente: el nombre completo de la comunidad autónoma o comunidades, el año presupuestario, y las unidades monetarias (miles de euros o millones de euros)
+- Menciona todas las cifras y conceptos relevantes de la tabla
+- Si la tabla compara varias comunidades autónomas, menciona todas con sus cifras
+- No inventes datos que no estén en la tabla o en el texto de la página
+- No uses formato de lista ni bullets, solo prosa continua
+- Máximo 200 palabras
 
 Escribe el texto narrativo:"""
 
     respuesta = client.chat.completions.create(
         model=MODELO_NARRATIVIZADOR,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
+        temperature=0.1,
         max_tokens=500
     )
     return respuesta.choices[0].message.content.strip()
+
 
 def narrativizar_chunks(chunks):
     chunks_narrativizados = []
@@ -120,7 +148,8 @@ def narrativizar_chunks(chunks):
             texto_narrativo = narrativizar_tabla(
                 chunk["texto"],
                 chunk["pagina"],
-                chunk["fuente"]
+                chunk["fuente"],
+                chunk.get("texto_pagina", "")
             )
             chunks_narrativizados.append({
                 "texto": texto_narrativo,
@@ -137,6 +166,7 @@ def narrativizar_chunks(chunks):
             chunks_narrativizados.append(chunk)
 
     return chunks_narrativizados
+
 
 def vectorizar(chunks, fuente):
     existentes = coleccion.get(where={"fuente": fuente})
@@ -165,7 +195,6 @@ def vectorizar(chunks, fuente):
         )
         print(f"   chunk {i+1}/{len(chunks)} vectorizado")
 
-RUTA_JSON = "data/processed/datos_extraidos.json"
 
 def cargar_json_existente():
     if os.path.exists(RUTA_JSON):
@@ -173,12 +202,66 @@ def cargar_json_existente():
             return json.load(f)
     return []
 
+
 def fuentes_en_json(datos):
     return {entrada["fuente"] for entrada in datos}
+
 
 def guardar_json(datos):
     with open(RUTA_JSON, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, indent=2)
+
+
+def extraer_ejemplos_hyde(paginas, fuente):
+    if os.path.exists(RUTA_EJEMPLOS_HYDE):
+        with open(RUTA_EJEMPLOS_HYDE, "r", encoding="utf-8") as f:
+            ejemplos = json.load(f)
+    else:
+        ejemplos = {}
+
+    nombre = os.path.basename(fuente)
+    if nombre in ejemplos:
+        print(f"   Ejemplos HyDE ya existentes para {nombre} — saltando")
+        return
+
+    texto_completo = " ".join([p["texto"] for p in paginas if p["texto"]])
+
+    prompt = f"""Eres un experto en presupuestos públicos españoles.
+Lee el siguiente fragmento de un documento presupuestario oficial español y extrae exactamente 15 frases cortas y representativas del vocabulario y estilo de escritura de este tipo de documentos.
+
+Estas frases se usarán como ejemplos para que un sistema de IA imite el vocabulario oficial cuando busque información en estos documentos.
+
+Requisitos de las frases:
+- Deben ser frases reales o muy representativas del estilo del documento
+- Deben contener terminología presupuestaria oficial española
+- Deben variar en tema: ingresos, gastos, programas, comunidades, impuestos
+- Cada frase debe tener entre 10 y 25 palabras
+- No repitas la misma estructura
+
+Fragmento del documento {nombre}:
+{texto_completo[:4000]}
+
+Devuelve SOLO un array JSON con las 15 frases, sin explicaciones ni markdown:
+["frase1", "frase2", ...]"""
+
+    try:
+        respuesta = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=800
+        )
+        contenido = respuesta.choices[0].message.content.strip()
+        contenido = contenido.replace("```json", "").replace("```", "").strip()
+        frases = json.loads(contenido)
+        ejemplos[nombre] = frases
+        with open(RUTA_EJEMPLOS_HYDE, "w", encoding="utf-8") as f:
+            json.dump(ejemplos, f, ensure_ascii=False, indent=2)
+        print(f"   {len(frases)} ejemplos HyDE extraídos para {nombre}")
+
+    except Exception as e:
+        print(f"   ERROR extrayendo ejemplos HyDE: {e}")
+
 
 def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
     print(f"\nProcesando: {ruta_pdf}")
@@ -208,7 +291,12 @@ def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
 
     print(f"   Vectorizando y subiendo a ChromaDB...")
     vectorizar(chunks_narrativizados, ruta_pdf)
+
+    print(f"   Extrayendo ejemplos de vocabulario para HyDE...")
+    extraer_ejemplos_hyde(paginas, ruta_pdf)
+
     print(f"   Listo.")
+
 
 def main():
     pdfs = [f for f in os.listdir("data/raw") if f.endswith(".pdf")]
@@ -231,7 +319,5 @@ def main():
     print(f"Total páginas en datos_extraidos.json: {len(datos_json)}")
     print(f"Total vectores en base de datos: {total}")
 
-main()
 
-# PENDIENTE: ejecutar pipeline completo para re-vectorizar
-# con texto normalizado
+main()
