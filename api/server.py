@@ -138,10 +138,10 @@ def chat(req: ChatRequest):
     )
     vector_pregunta = embed_resp.data[0].embedding
 
-    # Buscar top-6 chunks en ChromaDB
+    # Buscar top-12 chunks en ChromaDB (subido de 6 para cubrir más comunidades en preguntas comparativas)
     resultados = coleccion.query(
         query_embeddings=[vector_pregunta],
-        n_results=6,
+        n_results=12,
         include=["documents", "metadatas", "distances"]
     )
 
@@ -166,11 +166,11 @@ def chat(req: ChatRequest):
     prompt = f"""Eres un asistente de transparencia publica que ayuda a los ciudadanos a entender los presupuestos de las comunidades autonomas de España 2026.
 
 Responde de forma clara y simple. Sigue estas reglas:
-- Si tienes datos exactos en el contexto,usalos y cita la pagina
-- Si tienes datos parciales de varias comunidades, comparalos aunque sean incompletos y dilo
-- Si el contexto tiene datos de varias comunidades, presentalos todos ordenados
+- Si tienes datos exactos en el contexto, usalos y cita la pagina
+- Si la pregunta pide comparar varias comunidades, lista TODAS las que aparezcan en el contexto con sus cifras concretas, ordenadas de mayor a menor
+- Si el contexto no cubre todas las comunidades de España, indica explicitamente cuales tienes y cuales no, en lugar de decir simplemente que no tienes datos
 - Nunca inventes cifras
-- Si no tienes suficiente informacion, explica que datos si tienes y sugiere una pregunta mas concreta que podria funcionar mejor
+- Si no tienes suficiente informacion sobre alguna comunidad concreta, sugiere preguntar especificamente por ella
 
 CONTEXTO DEL PRESUPUESTO:
 {contexto}
