@@ -16,7 +16,6 @@ MODELO_NARRATIVIZADOR = "gpt-4o"
 PAUSA_ENTRE_LLAMADAS = 0.5
 MAX_COLUMNAS_TABLA = 15
 RUTA_JSON = "data/processed/datos_extraidos.json"
-RUTA_EJEMPLOS_HYDE = "data/processed/ejemplos_hyde.json"
 
 
 def extraer(ruta_pdf):
@@ -212,57 +211,6 @@ def guardar_json(datos):
         json.dump(datos, f, ensure_ascii=False, indent=2)
 
 
-def extraer_ejemplos_hyde(paginas, fuente):
-    if os.path.exists(RUTA_EJEMPLOS_HYDE):
-        with open(RUTA_EJEMPLOS_HYDE, "r", encoding="utf-8") as f:
-            ejemplos = json.load(f)
-    else:
-        ejemplos = {}
-
-    nombre = os.path.basename(fuente)
-    if nombre in ejemplos:
-        print(f"   Ejemplos HyDE ya existentes para {nombre} — saltando")
-        return
-
-    texto_completo = " ".join([p["texto"] for p in paginas if p["texto"]])
-
-    prompt = f"""Eres un experto en presupuestos públicos españoles.
-Lee el siguiente fragmento de un documento presupuestario oficial español y extrae exactamente 15 frases cortas y representativas del vocabulario y estilo de escritura de este tipo de documentos.
-
-Estas frases se usarán como ejemplos para que un sistema de IA imite el vocabulario oficial cuando busque información en estos documentos.
-
-Requisitos de las frases:
-- Deben ser frases reales o muy representativas del estilo del documento
-- Deben contener terminología presupuestaria oficial española
-- Deben variar en tema: ingresos, gastos, programas, comunidades, impuestos
-- Cada frase debe tener entre 10 y 25 palabras
-- No repitas la misma estructura
-
-Fragmento del documento {nombre}:
-{texto_completo[:4000]}
-
-Devuelve SOLO un array JSON con las 15 frases, sin explicaciones ni markdown:
-["frase1", "frase2", ...]"""
-
-    try:
-        respuesta = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=800
-        )
-        contenido = respuesta.choices[0].message.content.strip()
-        contenido = contenido.replace("```json", "").replace("```", "").strip()
-        frases = json.loads(contenido)
-        ejemplos[nombre] = frases
-        with open(RUTA_EJEMPLOS_HYDE, "w", encoding="utf-8") as f:
-            json.dump(ejemplos, f, ensure_ascii=False, indent=2)
-        print(f"   {len(frases)} ejemplos HyDE extraídos para {nombre}")
-
-    except Exception as e:
-        print(f"   ERROR extrayendo ejemplos HyDE: {e}")
-
-
 def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
     print(f"\nProcesando: {ruta_pdf}")
 
@@ -291,9 +239,6 @@ def procesar_pdf(ruta_pdf, datos_json, fuentes_procesadas):
 
     print(f"   Vectorizando y subiendo a ChromaDB...")
     vectorizar(chunks_narrativizados, ruta_pdf)
-
-    print(f"   Extrayendo ejemplos de vocabulario para HyDE...")
-    extraer_ejemplos_hyde(paginas, ruta_pdf)
 
     print(f"   Listo.")
 
