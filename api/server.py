@@ -35,9 +35,11 @@ NOMBRES_DOCUMENTOS = {
     "presupuestos_generales_2026.pdf": "Presupuestos Generales Madrid 2026",
     "resumen_ingresos_y_gastos.pdf": "Resumen Ingresos y Gastos Madrid",
     "andalucia.pdf": "Presupuestos Comunidad de Andalucía 2026",
-    "castillalamancha.pdf": "Presupuestos Castilla-La Mancha 2026",
     "castillayleon.pdf": "Presupuestos Castilla y León 2026",
+    "valencia.pdf": "Presupuestos Comunidad Valenciana 2026",
 }
+
+
 
 DB_PATH = "data/logs/conversaciones.db"
 
