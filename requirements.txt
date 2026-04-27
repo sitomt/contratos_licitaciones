@@ -88,3 +88,4 @@ zipp==3.23.0
 streamlit==1.56.0
 fastapi==0.115.12
 umap-learn==0.5.7
+python-multipart==0.0.27

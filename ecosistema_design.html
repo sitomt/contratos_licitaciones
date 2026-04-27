@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ecosistema de Cristal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#F8F7F4;--amber:#F59E0B;--amber-soft:rgba(245,158,11,.12);
+  --blue:#007AFF;--blue-soft:rgba(0,122,255,.12);
+  --glass-bg:rgba(255,255,255,.52);--glass-border:rgba(255,255,255,.7);
+  --glass-shadow:0 8px 32px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --glass-shadow-lg:0 20px 60px rgba(0,0,0,.09),0 2px 8px rgba(0,0,0,.05);
+  --text-primary:#1a1814;--text-secondary:#5a5650;--text-muted:#9a9590;
+  --radius:20px;--radius-sm:12px;--radius-pill:999px;
+}
+html,body{height:100%;overflow:hidden;cursor:none}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+
+/* Custom cursor */
+#cursor{position:fixed;pointer-events:none;z-index:9999;
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(245,158,11,.25);border:1.5px solid rgba(245,158,11,.5);
+  transform:translate(-50%,-50%);
+  transition:width .25s,height .25s,background .25s,border-color .25s;
+}
+#cursor.hover-active{width:60px;height:60px;background:rgba(0,122,255,.2);border-color:rgba(0,122,255,.5)}
+#cursor.hidden{opacity:0}
+
+/* Blobs */
+.blob-wrap{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(80px)}
+.blob-blue{width:600px;height:600px;background:radial-gradient(circle,rgba(0,122,255,.45) 0%,rgba(0,122,255,.1) 70%);top:-150px;right:-100px;animation:floatBlue 20s ease-in-out infinite}
+.blob-amber{width:500px;height:500px;background:radial-gradient(circle,rgba(245,158,11,.45) 0%,rgba(245,158,11,.1) 70%);bottom:-100px;left:-80px;animation:floatAmber 25s ease-in-out infinite}
+@keyframes floatBlue{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-40px,60px) scale(1.05)}66%{transform:translate(30px,-30px) scale(.97)}}
+@keyframes floatAmber{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(50px,-40px) scale(1.08)}66%{transform:translate(-20px,30px) scale(.95)}}
+.blob-hp{opacity:.62!important}
+
+/* Glass */
+.glass{background:var(--glass-bg);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
+.glass-lg{background:rgba(255,255,255,.58);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid rgba(255,255,255,.75);box-shadow:var(--glass-shadow-lg)}
+
+/* ═══ HOMEPAGE ═══ */
+#homepage{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;opacity:0;transition:opacity .6s ease}
+#homepage.visible{opacity:1}
+#homepage.exit{opacity:0;pointer-events:none;transition:opacity .6s ease}
+.hp-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px);
+  background-size:60px 60px;z-index:1}
+.hp-content{position:relative;z-index:2;text-align:center;padding:0 40px}
+.hp-line-wrap{height:1px;overflow:visible;margin-bottom:20px;opacity:0;transition:opacity .4s}
+.hp-line-wrap.show{opacity:1}
+.hp-line{height:1px;background:var(--amber);transform-origin:left;transform:scaleX(0);animation:none}
+.hp-line.draw{animation:drawLine .6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes drawLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hp-eyebrow{font-size:.68rem;letter-spacing:.3em;color:var(--amber);font-weight:600;text-transform:uppercase;opacity:0;transform:translateY(6px);transition:opacity .5s,transform .5s;margin-bottom:22px}
+.hp-eyebrow.show{opacity:1;transform:translateY(0)}
+.hp-title{font-family:'Playfair Display',serif;font-size:clamp(3.5rem,6vw,5.5rem);font-weight:700;color:var(--text-primary);line-height:1.05;margin-bottom:20px;letter-spacing:-.02em}
+.hp-word{display:inline-block;overflow:hidden;margin-right:.25em}
+.hp-word-inner{display:block;clip-path:inset(100% 0 0 0);transition:clip-path .65s cubic-bezier(.22,1,.36,1)}
+.hp-word-inner.reveal{clip-path:inset(0% 0 0 0)}
+.hp-sub{font-size:1.05rem;color:var(--text-secondary);opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;margin-bottom:32px}
+.hp-sub.show{opacity:1;transform:translateY(0)}
+.hp-pills{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.hp-pill{position:relative;padding:9px 18px;border-radius:99px;font-size:.82rem;font-weight:500;cursor:default;opacity:0;transform:scale(.8);transition:opacity .4s,transform .4s,rotate .25s,box-shadow .25s;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.hp-pill.show{opacity:1;transform:scale(1)}
+.hp-pill:hover{rotate:-2deg;transform:scale(1.08)!important;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.hp-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.72rem;padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(0,0,0,.1);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.hp-pill:hover .hp-tooltip{opacity:1}
+.hp-cta{padding:16px 42px;border-radius:99px;background:var(--amber);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:none;opacity:0;transform:scale(.85);transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;box-shadow:0 4px 20px rgba(245,158,11,.35)}
+.hp-cta.show{opacity:1;transform:scale(1)}
+.hp-cta:hover{transform:scale(1.05)!important;box-shadow:0 0 40px rgba(245,158,11,.4)}
+.hp-scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .5s;z-index:2}
+.hp-scroll-hint.show{opacity:1}
+.hp-scroll-hint span{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted)}
+.hp-chevron{color:var(--amber);font-size:20px;animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* ═══ APP ═══ */
+#app-shell{position:fixed;inset:0;z-index:1;opacity:0;transition:opacity .6s ease;pointer-events:none;display:flex;flex-direction:column}
+#app{display:flex;flex-direction:column;flex:1;min-height:0}
+#app-shell.visible{opacity:1;pointer-events:all}
+
+nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(248,247,244,.82);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border-bottom:1px solid rgba(255,255,255,.6);box-shadow:0 1px 24px rgba(0,0,0,.06)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{position:relative;padding:8px 18px;font-size:.78rem;font-weight:500;letter-spacing:.08em;color:var(--text-secondary);cursor:none;border:none;background:none;font-family:'DM Sans',sans-serif;transition:color .3s;border-radius:8px}
+.nav-tab:hover{color:var(--text-primary);background:rgba(0,0,0,.04)}
+.nav-tab.active{color:var(--text-primary)}
+.nav-underline{position:absolute;bottom:0;left:18px;right:18px;height:2px;background:var(--amber);border-radius:1px;animation:ulIn .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes ulIn{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+
+.content{flex:1;overflow:hidden;position:relative}
+
+/* Section transitions */
+.section{position:absolute;inset:0;padding:24px 32px 90px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.1) transparent}
+.section::-webkit-scrollbar{width:4px}
+.section::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:4px}
+.section-enter{animation:secIn .4s cubic-bezier(.22,1,.36,1) both}
+.section-exit{animation:secOut .3s ease forwards;pointer-events:none}
+@keyframes secIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes secOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-12px)}}
+
+/* ═══ CIUDADANO ═══ */
+.ciudadano-layout{display:grid;grid-template-columns:65fr 35fr;gap:20px;height:100%;max-height:calc(100vh - 64px - 90px)}
+.chat-panel{border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;height:100%}
+.chat-header{padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.5)}
+.chat-header h2{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600}
+.chat-header p{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:4px}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:82%;animation:msgIn .45s cubic-bezier(.22,1,.36,1)}
+@keyframes msgIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.assistant{align-self:flex-start;align-items:flex-start}
+.msg-bubble{padding:11px 16px;border-radius:18px;font-size:.87rem;line-height:1.55}
+.msg.user .msg-bubble{background:linear-gradient(135deg,rgba(245,158,11,.22),rgba(245,158,11,.12));border:1px solid rgba(245,158,11,.3);border-bottom-right-radius:6px}
+.msg.assistant .msg-bubble{background:rgba(255,255,255,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);box-shadow:0 2px 12px rgba(0,0,0,.06);border-bottom-left-radius:6px}
+.msg-label{font-size:.7rem;color:var(--text-muted);padding:0 6px}
+.msg-typing{display:flex;gap:5px;align-items:center;padding:4px 0}
+.msg-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-muted);animation:dot 1.2s ease-in-out infinite}
+.msg-typing span:nth-child(2){animation-delay:.2s}
+.msg-typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{transform:scale(.7);opacity:.4}40%{transform:scale(1);opacity:1}}
+.chat-input-area{padding:12px 16px;border-top:1px solid rgba(255,255,255,.5)}
+.chat-pill{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.8);border-radius:var(--radius-pill);padding:8px 8px 8px 18px;box-shadow:0 4px 16px rgba(0,0,0,.07);transition:transform .2s,border-color .2s,box-shadow .2s}
+.chat-pill:focus-within{transform:scale(1.02);border-color:rgba(245,158,11,.5);box-shadow:0 0 0 3px rgba(245,158,11,.12),0 4px 16px rgba(0,0,0,.07)}
+.chat-pill input{flex:1;border:none;background:none;outline:none;font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--text-primary)}
+.chat-pill input::placeholder{color:var(--text-muted)}
+.send-btn{width:36px;height:36px;border-radius:50%;background:var(--amber);border:none;cursor:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(245,158,11,.4)}
+.send-btn:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(245,158,11,.5)}
+.sidebar{display:flex;flex-direction:column;gap:16px;overflow-y:auto;padding-right:2px}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(0,0,0,.08);border-radius:4px}
+.sidebar-card{border-radius:var(--radius);padding:18px;transition:transform .3s,box-shadow .3s}
+.sidebar-card:hover{transform:scale(1.02);box-shadow:0 24px 60px rgba(0,0,0,.1)}
+.sidebar-card h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.budget-sec-lbl{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.budget-sec-lbl.ap{color:#16a34a}.budget-sec-lbl.pr{color:var(--amber)}
+.region-pills{display:flex;flex-wrap:wrap;gap:5px}
+.rpill{font-size:.7rem;padding:3px 9px;border-radius:99px;font-weight:500}
+.rpill.ap{background:rgba(22,163,74,.1);color:#166534;border:1px solid rgba(22,163,74,.2)}
+.rpill.pr{background:rgba(245,158,11,.1);color:#92400e;border:1px solid rgba(245,158,11,.25)}
+.sugg-pill{display:block;width:100%;text-align:left;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.75);border-radius:10px;padding:9px 13px;font-size:.78rem;color:var(--text-secondary);font-family:'DM Sans',sans-serif;cursor:none;margin-bottom:7px;transition:all .2s;line-height:1.4}
+.sugg-pill:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--text-primary);transform:translateX(3px)}
+.sugg-pill:last-child{margin-bottom:0}
+
+/* ═══ COMPLIANCE EXPANDABLE ═══ */
+.compliance-layout{max-width:1000px;margin:0 auto;padding-top:20px}
+.compliance-header{text-align:center;margin-bottom:36px}
+.compliance-header h1{font-family:'Playfair Display',serif;font-size:2rem;font-weight:600;margin-bottom:8px}
+.compliance-header p{color:var(--text-secondary);font-size:.9rem}
+.compliance-grid{display:flex;gap:16px;align-items:flex-start}
+.comp-card{border-radius:var(--radius);padding:24px;flex:1;transition:all .5s cubic-bezier(.22,1,.36,1);cursor:none;position:relative}
+.comp-card.expanded{flex:2.8}
+.comp-card.shrunk{opacity:.45;flex:.6}
+.comp-card:not(.expanded):hover{transform:scale(1.02) translateY(-3px);box-shadow:0 28px 70px rgba(0,0,0,.1)}
+.comp-icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px}
+.comp-card h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;margin-bottom:10px;text-align:center}
+.comp-card p.comp-short{font-size:.82rem;color:var(--text-secondary);line-height:1.6;text-align:center}
+.comp-badge{display:inline-block;margin-top:14px;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:500}
+.comp-expand-content{overflow:hidden;max-height:0;opacity:0;transition:max-height .5s cubic-bezier(.22,1,.36,1),opacity .4s ease;margin-top:0}
+.comp-expand-content.open{max-height:600px;opacity:1;margin-top:20px}
+.comp-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.06);border:none;cursor:none;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.comp-close:hover{background:rgba(0,0,0,.12)}
+.comp-list li{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(0,0,0,.04)}
+.comp-list li:last-child{border-bottom:none}
+.comp-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.comp-table th{text-align:left;padding:6px 10px;font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid rgba(0,0,0,.07)}
+.comp-table td{padding:8px 10px;color:var(--text-secondary);border-bottom:1px solid rgba(0,0,0,.04)}
+
+/* ═══ MANTENIMIENTO ═══ */
+.mant-layout{max-width:1100px;margin:0 auto;padding-top:16px}
+.mant-header{margin-bottom:20px}
+.mant-header h1{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;margin-bottom:14px}
+.sub-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.sub-tab{padding:7px 16px;border-radius:99px;font-size:.75rem;font-weight:500;letter-spacing:.03em;cursor:none;border:1px solid rgba(255,255,255,.6);transition:all .25s;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,.4);color:var(--text-secondary)}
+.sub-tab.active{background:var(--amber);color:#fff;border-color:var(--amber);box-shadow:0 2px 10px rgba(245,158,11,.35)}
+.sub-tab:hover:not(.active){background:rgba(255,255,255,.65);color:var(--text-primary)}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.metric-card{border-radius:var(--radius-sm);padding:16px;text-align:center;transition:transform .25s;animation:metricIn .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes metricIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.metric-card:hover{transform:translateY(-2px)}
+.metric-val{font-size:1.8rem;font-weight:300;font-family:'Playfair Display',serif}
+.metric-lbl{font-size:.72rem;color:var(--text-muted);margin-top:4px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+.metric-dot{width:8px;height:8px;border-radius:50%;margin:8px auto 0}
+.dot-green{background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 2s infinite}
+.dot-amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.sys-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sys-panel{border-radius:var(--radius-sm);padding:16px}
+.sys-panel h4{font-size:.78rem;font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
+.sys-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:.82rem}
+.sys-item:last-child{border-bottom:none}
+.sbadge{padding:2px 10px;border-radius:99px;font-size:.7rem;font-weight:500}
+.ok{background:rgba(22,163,74,.1);color:#166534}.warn{background:rgba(245,158,11,.12);color:#92400e}.info{background:rgba(0,122,255,.08);color:#0057b8}
+
+/* Documentos */
+.docs-list{display:flex;flex-direction:column;gap:10px}
+.doc-item{border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:center;gap:14px;transition:transform .2s,box-shadow .2s;cursor:none;animation:docIn .4s cubic-bezier(.22,1,.36,1) both}
+@keyframes docIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.doc-item:hover{transform:translateX(4px);box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.doc-icon{width:40px;height:40px;border-radius:10px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-info{flex:1}
+.doc-name{font-size:.85rem;font-weight:500;margin-bottom:2px}
+.doc-meta{font-size:.72rem;color:var(--text-muted)}
+.doc-badge{padding:3px 10px;border-radius:99px;font-size:.68rem;font-weight:600;background:rgba(0,122,255,.08);color:var(--blue)}
+
+/* Upload zone */
+.upload-zone{margin-top:20px;border-radius:var(--radius);padding:32px;text-align:center;border:2px dashed transparent;cursor:none;transition:all .3s;background:rgba(255,255,255,.35);position:relative;overflow:hidden}
+.upload-zone::before{content:'';position:absolute;inset:0;border-radius:inherit;border:2px dashed rgba(245,158,11,.35);animation:dashAnim 3s linear infinite}
+@keyframes dashAnim{from{stroke-dashoffset:0}to{stroke-dashoffset:100}}
+.upload-zone:hover{background:rgba(245,158,11,.05)}
+.upload-zone.dragover{background:rgba(245,158,11,.08);border-color:transparent}
+.upload-icon{font-size:36px;margin-bottom:10px}
+.upload-text{font-size:.88rem;color:var(--text-secondary)}
+.upload-sub{font-size:.74rem;color:var(--text-muted);margin-top:4px}
+.progress-wrap{margin-top:16px;display:none}
+.progress-wrap.active{display:block}
+.progress-phase{font-size:.78rem;color:var(--text-secondary);margin-bottom:8px;font-weight:500}
+.progress-bar-bg{height:6px;background:rgba(0,0,0,.06);border-radius:99px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--amber),#fbbf24);border-radius:99px;transition:width .4s cubic-bezier(.22,1,.36,1);width:0%}
+.confetti-piece{position:fixed;pointer-events:none;width:8px;height:8px;border-radius:2px;z-index:9000;animation:confettiFall 2.5s ease-in forwards}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.toast{position:fixed;top:80px;right:24px;z-index:8000;padding:12px 18px;border-radius:14px;background:rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(22,163,74,.25);box-shadow:0 12px 40px rgba(0,0,0,.12);font-size:.84rem;font-weight:500;color:#166534;display:flex;align-items:center;gap:8px;animation:toastIn .4s cubic-bezier(.22,1,.36,1)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* Vectores */
+.vectores-panel{border-radius:var(--radius);height:380px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.v-dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,122,255,.15) 1.5px,transparent 1.5px);background-size:28px 28px;animation:moveDots 20s linear infinite}
+@keyframes moveDots{from{background-position:0 0}to{background-position:56px 56px}}
+.v-sphere{width:160px;height:160px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(0,122,255,.35),rgba(245,158,11,.2) 60%,transparent);border:1px solid rgba(0,122,255,.2);margin:0 auto 12px;box-shadow:0 0 60px rgba(0,122,255,.15),inset 0 0 40px rgba(255,255,255,.1);animation:sphereGlow 8s ease-in-out infinite}
+@keyframes sphereGlow{0%,100%{box-shadow:0 0 60px rgba(0,122,255,.15),inset 0 0 40px rgba(255,255,255,.1)}50%{box-shadow:0 0 80px rgba(245,158,11,.2),inset 0 0 50px rgba(255,255,255,.15)}}
+.v-stats{display:flex;gap:24px;justify-content:center;margin-top:16px}
+.v-stat-val{font-size:1.1rem;font-weight:600;font-family:'Playfair Display',serif}
+.v-stat-lbl{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+
+/* RAG pipeline */
+.rag-wrap{border-radius:var(--radius);padding:32px 28px}
+.rag-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;margin-bottom:28px;text-align:center}
+.rag-pipe{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:0}
+.rag-step{display:flex;flex-direction:column;align-items:center;animation:ragPop .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes ragPop{from{opacity:0;transform:scale(0)}50%{transform:scale(1.08)}to{opacity:1;transform:scale(1)}}
+.rag-box{width:88px;min-height:70px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;gap:5px;transition:transform .25s;cursor:default}
+.rag-box:hover{transform:translateY(-4px) scale(1.06)}
+.rag-ico{font-size:22px}
+.rag-lbl{font-size:.62rem;font-weight:600;text-align:center;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);line-height:1.3}
+.rag-arr{width:28px;height:2px;position:relative;flex-shrink:0}
+.rag-arr::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(245,158,11,.3),rgba(245,158,11,.7));border-radius:1px;animation:drawArr .4s ease both}
+@keyframes drawArr{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
+.rag-arr::after{content:'';position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid rgba(245,158,11,.7);border-right:none}
+.rag-dot{position:absolute;top:-3px;left:0;width:8px;height:8px;border-radius:50%;background:var(--amber);animation:flowD 2s ease-in-out infinite}
+@keyframes flowD{0%{left:0;opacity:1}80%{left:calc(100% - 8px);opacity:1}100%{left:calc(100% - 8px);opacity:0}}
+.rag-descs{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rag-desc{border-radius:12px;padding:14px 16px}
+.rag-desc-lbl{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);margin-bottom:5px}
+.rag-desc p{font-size:.78rem;color:var(--text-secondary);line-height:1.55}
+
+/* ═══ CHAT TÉCNICO ═══ */
+.tech-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;height:calc(100vh - 64px - 90px - 50px)}
+.tech-chat{border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden}
+.tech-panel{border-radius:var(--radius);overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.tech-panel::-webkit-scrollbar{width:3px}
+.tech-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:4px}
+.phase-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;transition:all .3s}
+.phase-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:rgba(0,0,0,.12);transition:background .3s,box-shadow .3s}
+.phase-dot.active{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 1s infinite}
+.phase-dot.done{background:#22c55e;box-shadow:0 0 6px #22c55e;animation:none}
+.phase-text{font-size:.82rem;color:var(--text-secondary);transition:color .3s}
+.phase-text.active{color:var(--text-primary);font-weight:500}
+.phase-text.done{color:#166534}
+.chunk-card{border-radius:12px;padding:12px;animation:msgIn .4s cubic-bezier(.22,1,.36,1)}
+.chunk-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.chunk-source{font-size:.7rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
+.sim-bar-bg{height:4px;background:rgba(0,0,0,.07);border-radius:99px;overflow:hidden;margin:6px 0}
+.sim-bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.22,1,.36,1)}
+.chunk-text{font-size:.74rem;color:var(--text-muted);line-height:1.5}
+.session-row{display:flex;justify-content:space-between;font-size:.8rem;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04)}
+.session-row:last-child{border-bottom:none}
+.eval-verdict{padding:2px 8px;border-radius:99px;font-size:.68rem;font-weight:600}
+
+/* ═══ INSIGHTS ═══ */
+.insights-wrap{max-width:1100px;margin:0 auto}
+.ins-header{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;margin-bottom:24px}
+.ins-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.ins-metric{border-radius:var(--radius);padding:24px;text-align:center;transition:transform .3s}
+.ins-metric:hover{transform:translateY(-3px)}
+.ins-metric-val{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:600;margin-bottom:6px}
+.ins-metric-lbl{font-size:.78rem;color:var(--text-secondary)}
+.ins-metric-sub{font-size:.72rem;color:var(--text-muted);margin-top:4px}
+.ins-section-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;margin-bottom:16px;margin-top:28px}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:20px}
+.tag-bubble{border-radius:99px;display:flex;align-items:center;justify-content:center;font-weight:500;animation:float 4s ease-in-out infinite;transition:transform .2s,box-shadow .2s}
+.tag-bubble:hover{transform:scale(1.1);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.eval-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.eval-table th{text-align:left;padding:8px 12px;font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid rgba(0,0,0,.08)}
+.eval-table td{padding:9px 12px;color:var(--text-secondary);border-bottom:1px solid rgba(0,0,0,.04)}
+.eval-table tr:hover td{background:rgba(255,255,255,.4)}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:12px;margin-bottom:8px;font-size:.82rem}
+.alert-item:last-child{margin-bottom:0}
+
+/* Legal banner */
+.legal-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;border-radius:var(--radius);padding:14px 22px;display:flex;align-items:center;gap:14px;max-width:700px;width:calc(100% - 48px);animation:bannerIn .6s .8s cubic-bezier(.22,1,.36,1) both;background:rgba(255,255,255,.72);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.8);box-shadow:0 16px 48px rgba(0,0,0,.1)}
+@keyframes bannerIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.banner-btn{padding:8px 18px;border-radius:99px;background:var(--amber);color:#fff;border:none;cursor:none;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;transition:all .2s;box-shadow:0 2px 10px rgba(245,158,11,.35);white-space:nowrap;flex-shrink:0}
+.banner-btn:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(245,158,11,.5)}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<div class="blob-wrap" id="blobWrap">
+  <div class="blob blob-blue" id="blobBlue"></div>
+  <div class="blob blob-amber" id="blobAmber"></div>
+</div>
+
+<!-- Homepage -->
+<div id="homepage">
+  <div class="hp-grid"></div>
+  <div class="hp-content" id="hpContent">
+    <div class="hp-line-wrap" id="hpLineWrap">
+      <div class="hp-line" id="hpLine" style="width:280px;margin:0 auto"></div>
+    </div>
+    <div class="hp-eyebrow" id="hpEyebrow">Máster en Inteligencia Artificial · ISDI 2026</div>
+    <h1 class="hp-title" id="hpTitle">
+      <span class="hp-word"><span class="hp-word-inner" id="w0">Ecosistema</span></span>
+      <span class="hp-word"><span class="hp-word-inner" id="w1">de</span></span>
+      <span class="hp-word"><span class="hp-word-inner" id="w2">Cristal</span></span>
+    </h1>
+    <p class="hp-sub" id="hpSub">Transparencia presupuestaria mediante inteligencia artificial</p>
+    <div class="hp-pills" id="hpPills">
+      <div class="hp-pill" data-tooltip="Retrieval-Augmented Generation: el motor de búsqueda semántica">💡 RAG<span class="hp-tooltip">Retrieval-Augmented Generation: el motor de búsqueda semántica</span></div>
+      <div class="hp-pill" data-tooltip="Base de datos vectorial con 8.407 embeddings indexados">🗄️ ChromaDB<span class="hp-tooltip">Base de datos vectorial con 8.407 embeddings indexados</span></div>
+      <div class="hp-pill" data-tooltip="Modelo de lenguaje que genera respuestas en lenguaje natural">🧠 GPT-4o-mini<span class="hp-tooltip">Modelo de lenguaje que genera respuestas en lenguaje natural</span></div>
+    </div>
+    <button class="hp-cta" id="hpCta">Explorar la plataforma →</button>
+  </div>
+  <div class="hp-scroll-hint" id="hpScrollHint">
+    <span>Continuar</span>
+    <div class="hp-chevron">⌄</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-shell">
+  <div id="app"></div>
+</div>
+
+<script>
+// ══ CURSOR ══
+const cursor = document.getElementById('cursor');
+let cx = window.innerWidth/2, cy = window.innerHeight/2;
+let tx = cx, ty = cy;
+document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+(function animCursor() {
+  cx += (tx - cx) * 0.15;
+  cy += (ty - cy) * 0.15;
+  cursor.style.left = cx + 'px';
+  cursor.style.top = cy + 'px';
+  requestAnimationFrame(animCursor);
+})();
+document.addEventListener('mouseover', e => {
+  const interactive = e.target.closest('button,a,[role=button],.hp-pill,.sugg-pill,.nav-tab,.sub-tab,.send-btn,.doc-item,.comp-card,.tag-bubble');
+  cursor.classList.toggle('hover-active', !!interactive);
+});
+
+// ══ BLOB PARALLAX ══
+let bx = 0, by = 0, ax = 0, ay = 0;
+let blueCX = 0, blueCY = 0, amberCX = 0, amberCY = 0;
+const blobBlue = document.getElementById('blobBlue');
+const blobAmber = document.getElementById('blobAmber');
+document.addEventListener('mousemove', e => {
+  bx = (e.clientX / window.innerWidth - 0.5) * 120;
+  by = (e.clientY / window.innerHeight - 0.5) * 120;
+  ax = (e.clientX / window.innerWidth - 0.5) * 180;
+  ay = (e.clientY / window.innerHeight - 0.5) * 180;
+});
+(function animBlobs() {
+  if (document.getElementById('homepage').classList.contains('visible') && !document.getElementById('homepage').classList.contains('exit')) {
+    blueCX += (bx - blueCX) * 0.04;
+    blueCY += (by - blueCY) * 0.04;
+    amberCX += (ax - amberCX) * 0.06;
+    amberCY += (ay - amberCY) * 0.06;
+    blobBlue.style.marginLeft = blueCX + 'px';
+    blobBlue.style.marginTop = blueCY + 'px';
+    blobAmber.style.marginLeft = amberCX + 'px';
+    blobAmber.style.marginTop = amberCY + 'px';
+  }
+  requestAnimationFrame(animBlobs);
+})();
+
+// ══ HOMEPAGE PARALLAX on TITLE ══
+let hpTx = 0, hpTy = 0;
+document.addEventListener('mousemove', e => {
+  hpTx = (e.clientX / window.innerWidth - 0.5) * -30;
+  hpTy = (e.clientY / window.innerHeight - 0.5) * -20;
+});
+(function animTitle() {
+  const hpTitle = document.getElementById('hpTitle');
+  if (hpTitle) {
+    const cx = parseFloat(hpTitle.dataset.cx || 0);
+    const cy = parseFloat(hpTitle.dataset.cy || 0);
+    const nx = cx + (hpTx - cx) * 0.06;
+    const ny = cy + (hpTy - cy) * 0.06;
+    hpTitle.dataset.cx = nx;
+    hpTitle.dataset.cy = ny;
+    hpTitle.style.transform = `translate(${nx}px, ${ny}px)`;
+  }
+  requestAnimationFrame(animTitle);
+})();
+
+// ══ HOMEPAGE SEQUENCE ══
+function runHpSequence() {
+  const hp = document.getElementById('homepage');
+  hp.style.background = 'rgba(248,247,244,0)';
+  setTimeout(() => {
+    hp.classList.add('visible');
+    hp.style.background = '';
+  }, 300);
+  setTimeout(() => {
+    const lw = document.getElementById('hpLineWrap');
+    lw.classList.add('show');
+    document.getElementById('hpLine').classList.add('draw');
+  }, 800);
+  setTimeout(() => { document.getElementById('hpEyebrow').classList.add('show'); }, 1400);
+  setTimeout(() => { document.getElementById('w0').classList.add('reveal'); }, 1900);
+  setTimeout(() => { document.getElementById('w1').classList.add('reveal'); }, 2050);
+  setTimeout(() => { document.getElementById('w2').classList.add('reveal'); }, 2200);
+  setTimeout(() => { document.getElementById('hpSub').classList.add('show'); }, 2600);
+  const pills = document.querySelectorAll('.hp-pill');
+  pills.forEach((p, i) => {
+    setTimeout(() => p.classList.add('show'), 3100 + i * 120);
+  });
+  setTimeout(() => {
+    document.getElementById('hpCta').classList.add('show');
+    document.getElementById('hpScrollHint').classList.add('show');
+  }, 3700);
+}
+
+function enterApp() {
+  const hp = document.getElementById('homepage');
+  const app = document.getElementById('app-shell');
+  hp.classList.add('exit');
+  setTimeout(() => { hp.style.display = 'none'; }, 600);
+  setTimeout(() => { app.classList.add('visible'); }, 200);
+  // reset blob parallax
+  blobBlue.style.marginLeft = '';
+  blobBlue.style.marginTop = '';
+  blobAmber.style.marginLeft = '';
+  blobAmber.style.marginTop = '';
+}
+
+document.getElementById('hpCta').addEventListener('click', enterApp);
+document.getElementById('hpScrollHint').addEventListener('click', enterApp);
+window.addEventListener('wheel', function handler(e) {
+  if (!document.getElementById('homepage').classList.contains('exit')) {
+    enterApp();
+    window.removeEventListener('wheel', handler);
+  }
+});
+
+window.addEventListener('load', () => setTimeout(runHpSequence, 100));
+</script>
+
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback } = React;
+
+const APPROVED = ['Andalucía','Madrid','Castilla y León','Castilla-La Mancha','Extremadura','La Rioja','Murcia'];
+const PENDING = ['Cataluña','País Vasco','Galicia','Aragón','Asturias','Cantabria','Navarra','Baleares','Canarias','Valencia','Ceuta','Melilla'];
+const SUGGESTIONS = [
+  '¿Cuál es el presupuesto de Educación en Andalucía para 2026?',
+  '¿Qué comunidades tienen mayor gasto sanitario per cápita?',
+  '¿Cómo se distribuyen los fondos europeos entre regiones?',
+  '¿Cuál fue la evolución del déficit autonómico en 2024-2025?'
+];
+const MOCK_RESPONSES = [
+  'Según los datos del Ministerio de Hacienda, el presupuesto consolidado de las CCAA para 2026 asciende a **487.320 millones de euros**, un 3,2% más que el ejercicio anterior. Las comunidades con presupuesto aprobado representan el 62% del gasto autonómico total.',
+  'El gasto sanitario per cápita más elevado corresponde al **País Vasco (2.847€)**, seguido de **Navarra (2.691€)** y **Asturias (2.534€)**. La media nacional se sitúa en 2.156€ por habitante según la liquidación de 2024.',
+  'Los fondos europeos Next Generation EU ascienden a **69.528 millones de euros** para España. El 40% se gestiona directamente por CCAA. Andalucía (18,2%) y Cataluña (16,1%) son las principales receptoras por peso poblacional.',
+  'Los datos disponibles muestran que el déficit agregado de las CCAA se redujo del **0,6% del PIB en 2024 al 0,4% estimado para 2025**, gracias al mejor comportamiento de los ingresos tributarios y la contención del gasto corriente.'
+];
+const DOCS = [
+  { name: 'PGE_2026_Proyecto_Ley.pdf', meta: 'Ministerio de Hacienda · Enero 2026', size: '14.2 MB', chunks: 2847 },
+  { name: 'Presupuestos_Andalucia_2026.pdf', meta: 'Junta de Andalucía · Diciembre 2025', size: '8.6 MB', chunks: 1203 },
+  { name: 'Presupuestos_Madrid_2026.pdf', meta: 'CAM · Noviembre 2025', size: '9.1 MB', chunks: 1456 },
+  { name: 'Liquidacion_CCAA_2024.pdf', meta: 'Ministerio de Hacienda · Marzo 2025', size: '5.3 MB', chunks: 891 },
+  { name: 'Informe_Estabilidad_Presup_2025.pdf', meta: 'AIReF · Octubre 2025', size: '3.8 MB', chunks: 624 },
+  { name: 'CCAA_Deuda_Historico_2010-2025.pdf', meta: 'Banco de España · 2025', size: '2.1 MB', chunks: 387 },
+];
+
+// ── Send icon ──
+function SendIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>;
+}
+
+// ── Reusable chat logic hook ──
+function useChat(initialMsg) {
+  const [messages, setMessages] = useState([{ role:'assistant', text: initialMsg }]);
+  const [input, setInput] = useState('');
+  const [typing, setTyping] = useState(false);
+  const respIdx = useRef(0);
+  const msgEndRef = useRef(null);
+  useEffect(() => { msgEndRef.current?.parentElement?.scrollTo({top: msgEndRef.current.offsetTop, behavior:'smooth'}); }, [messages, typing]);
+  const send = useCallback((text, onSent) => {
+    const q = text || input.trim();
+    if (!q) return null;
+    setInput('');
+    setMessages(m => [...m, { role:'user', text: q }]);
+    setTyping(true);
+    const delay = 1600 + Math.random() * 800;
+    setTimeout(() => {
+      const resp = MOCK_RESPONSES[respIdx.current % MOCK_RESPONSES.length];
+      respIdx.current++;
+      setTyping(false);
+      setMessages(m => [...m, { role:'assistant', text: resp }]);
+      if (onSent) onSent(resp);
+    }, delay);
+    return delay;
+  }, [input]);
+  return { messages, input, setInput, typing, send, msgEndRef };
+}
+
+// ── Chat messages renderer ──
+function ChatMessages({ messages, typing, msgEndRef, compact }) {
+  const renderText = t => t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  return (
+    <div className="chat-messages" style={compact ? {padding:'12px 14px'} : {}}>
+      {messages.map((msg,i) => (
+        <div key={i} className={`msg ${msg.role}`}>
+          <span className="msg-label">{msg.role==='user'?'Tú':'🔮 Asistente'}</span>
+          <div className="msg-bubble" dangerouslySetInnerHTML={{__html: renderText(msg.text)}} />
+        </div>
+      ))}
+      {typing && (
+        <div className="msg assistant">
+          <span className="msg-label">🔮 Asistente</span>
+          <div className="msg-bubble"><div className="msg-typing"><span/><span/><span/></div></div>
+        </div>
+      )}
+      <div ref={msgEndRef} />
+    </div>
+  );
+}
+
+// ══ CIUDADANO ══
+function CiudadanoSection() {
+  const { messages, input, setInput, typing, send, msgEndRef } = useChat('Hola, soy el asistente de Ecosistema de Cristal. Puedo ayudarte a consultar información sobre presupuestos públicos españoles con datos oficiales verificados. ¿Qué deseas saber?');
+  return (
+    <div className="section section-enter">
+      <div className="ciudadano-layout">
+        <div className="chat-panel glass-lg">
+          <div className="chat-header">
+            <h2>Asistente Ciudadano</h2>
+            <p>Consulta datos de presupuestos públicos españoles · Fuentes oficiales verificadas</p>
+          </div>
+          <ChatMessages messages={messages} typing={typing} msgEndRef={msgEndRef} />
+          <div className="chat-input-area">
+            <div className="chat-pill">
+              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Pregunta sobre presupuestos públicos..." />
+              <button className="send-btn" onClick={()=>send()}><SendIcon/></button>
+            </div>
+          </div>
+        </div>
+        <div className="sidebar">
+          <div className="sidebar-card glass">
+            <h3>📊 Presupuestos 2026</h3>
+            <div style={{marginBottom:12}}>
+              <div className="budget-sec-lbl ap"><span>✓</span> Aprobados ({APPROVED.length})</div>
+              <div className="region-pills">{APPROVED.map(r=><span key={r} className="rpill ap">{r}</span>)}</div>
+            </div>
+            <div>
+              <div className="budget-sec-lbl pr"><span>⏳</span> Prorrogados ({PENDING.length})</div>
+              <div className="region-pills">{PENDING.map(r=><span key={r} className="rpill pr">{r}</span>)}</div>
+            </div>
+          </div>
+          <div className="sidebar-card glass">
+            <h3>💡 Preguntas sugeridas</h3>
+            {SUGGESTIONS.map((s,i)=><button key={i} className="sugg-pill" onClick={()=>send(s)}>{s}</button>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ COMPLIANCE ══
+const COMP_DATA = [
+  {
+    icon:'🔒', bg:'rgba(0,122,255,.08)', badge:'Conforme RGPD', badgeStyle:{background:'rgba(0,122,255,.08)',color:'#0057b8'},
+    title:'Privacidad por diseño',
+    short:'Esta plataforma no almacena datos personales. Las consultas son anónimas y se procesan sin trazabilidad individual.',
+    expandContent: () => (
+      <div>
+        <p style={{fontSize:'.82rem',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:12}}>El diseño de privacidad está integrado en cada capa del sistema, no añadido como capa posterior.</p>
+        <ul className="comp-list" style={{listStyle:'none'}}>
+          {[['🚫','Sin cookies de tracking'],['🔒','Sin compartir datos con terceros'],['👤','Sin identificación de usuarios'],['🔐','Datos en tránsito cifrados HTTPS'],['🗑️','Sin logs persistentes de consultas']].map(([ico,txt])=>(
+            <li key={txt}><span>{ico}</span><span style={{fontSize:'.82rem',color:'var(--text-secondary)'}}>{txt}</span></li>
+          ))}
+        </ul>
+      </div>
+    )
+  },
+  {
+    icon:'📦', bg:'rgba(245,158,11,.08)', badge:'Dominio público', badgeStyle:{background:'rgba(245,158,11,.1)',color:'#92400e'},
+    title:'Datos que procesamos',
+    short:'Únicamente se procesan documentos de dominio público publicados por organismos oficiales del Estado español.',
+    expandContent: () => (
+      <table className="comp-table">
+        <thead><tr><th>Dato</th><th>Uso</th><th>Retención</th></tr></thead>
+        <tbody>
+          {[['Pregunta del usuario','Procesamiento en tiempo real','0 días'],['Log de similitud','Métricas agregadas','90 días'],['Tiempo de respuesta','Optimización del sistema','90 días']].map(([d,u,r])=>(
+            <tr key={d}><td>{d}</td><td style={{color:'var(--text-muted)'}}>{u}</td><td><span style={{padding:'2px 8px',borderRadius:99,background:'rgba(22,163,74,.08)',color:'#166534',fontSize:'.7rem',fontWeight:600}}>{r}</span></td></tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  },
+  {
+    icon:'🏛️', bg:'rgba(22,163,74,.07)', badge:'Fuentes oficiales', badgeStyle:{background:'rgba(22,163,74,.08)',color:'#166534'},
+    title:'Fuentes de información',
+    short:'Ministerio de Hacienda, IGAE, AIReF, Banco de España y presupuestos autonómicos aprobados.',
+    expandContent: () => (
+      <div>
+        {[['📄','Andalucía 2026','Junta de Andalucía','presupuesto.juntadeandalucia.es'],['📄','Castilla-La Mancha 2026','Junta de C-LM','hacienda.castillalamancha.es'],['📄','Castilla y León 2026','Junta de CyL','hacienda.jcyl.es']].map(([ico,nom,org,url])=>(
+          <div key={nom} style={{padding:'10px 0',borderBottom:'1px solid rgba(0,0,0,.05)',display:'flex',gap:10,alignItems:'flex-start'}}>
+            <span>{ico}</span>
+            <div>
+              <div style={{fontWeight:600,fontSize:'.82rem'}}>{nom}</div>
+              <div style={{fontSize:'.72rem',color:'var(--text-muted)',marginTop:2}}>{org}</div>
+              <div style={{fontSize:'.7rem',color:'var(--blue)',marginTop:2}}>{url}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+];
+
+function ComplianceSection() {
+  const [expanded, setExpanded] = useState(null);
+  return (
+    <div className="section section-enter">
+      <div className="compliance-layout">
+        <div className="compliance-header">
+          <h1>Cumplimiento y Transparencia</h1>
+          <p>Marco legal y ético que rige el funcionamiento de la plataforma · <em>Haz click en una card para ver más</em></p>
+        </div>
+        <div className="compliance-grid">
+          {COMP_DATA.map((c,i) => {
+            const isExp = expanded === i;
+            const isShrunk = expanded !== null && !isExp;
+            return (
+              <div key={i} className={`comp-card glass ${isExp?'expanded':''} ${isShrunk?'shrunk':''}`} onClick={()=>setExpanded(isExp?null:i)}>
+                {isExp && <button className="comp-close" onClick={e=>{e.stopPropagation();setExpanded(null)}}>✕</button>}
+                <div className="comp-icon" style={{background:c.bg}}>{c.icon}</div>
+                <h3>{c.title}</h3>
+                <p className="comp-short">{c.short}</p>
+                <div style={{textAlign:'center'}}><span className="comp-badge" style={c.badgeStyle}>{c.badge}</span></div>
+                <div className={`comp-expand-content ${isExp?'open':''}`}>
+                  {c.expandContent()}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ MANTENIMIENTO ══
+function MantenimientoSection() {
+  const [sub, setSub] = useState('sistema');
+  const subTabs = [
+    {id:'sistema',label:'Sistema'},{id:'documentos',label:'Documentos'},
+    {id:'vectores',label:'Vectores'},{id:'pipeline',label:'Cómo funciona'},
+    {id:'tecnico',label:'Chat Técnico'},{id:'insights',label:'Insights'},
+  ];
+  return (
+    <div className="section section-enter">
+      <div className="mant-layout">
+        <div className="mant-header">
+          <h1>Panel de Mantenimiento</h1>
+          <div className="sub-tabs">
+            {subTabs.map(t=><button key={t.id} className={`sub-tab ${sub===t.id?'active':''}`} onClick={()=>setSub(t.id)}>{t.label}</button>)}
+          </div>
+        </div>
+        {sub==='sistema' && <SistemaTab key="s"/>}
+        {sub==='documentos' && <DocumentosTab key="d"/>}
+        {sub==='vectores' && <VectoresTab key="v"/>}
+        {sub==='pipeline' && <PipelineTab key="p"/>}
+        {sub==='tecnico' && <TecnicoTab key="t"/>}
+        {sub==='insights' && <InsightsTab key="i"/>}
+      </div>
+    </div>
+  );
+}
+
+function SistemaTab() {
+  const metrics = [
+    {val:'99.8%',lbl:'Disponibilidad',dot:'dot-green'},
+    {val:'847ms',lbl:'Latencia media',dot:'dot-amber'},
+    {val:'14.2k',lbl:'Consultas totales',dot:'dot-green'},
+    {val:'8.4k',lbl:'Vectores indexados',dot:'dot-green'},
+  ];
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      <div className="metrics-grid">
+        {metrics.map((m,i)=>(
+          <div key={i} className="metric-card glass" style={{animationDelay:`${i*.08}s`}}>
+            <div className="metric-val">{m.val}</div>
+            <div className="metric-lbl">{m.lbl}</div>
+            <div className={`metric-dot ${m.dot}`}/>
+          </div>
+        ))}
+      </div>
+      <div className="sys-row">
+        <div className="sys-panel glass">
+          <h4>Estado de servicios</h4>
+          {[['API RAG','Operativo','ok'],['ChromaDB','Operativo','ok'],['GPT-4o-mini','Operativo','ok'],['Cron PDFs','Programado','info'],['Redis Cache','Degradado','warn']].map(([n,s,c])=>(
+            <div key={n} className="sys-item"><span>{n}</span><span className={`sbadge ${c}`}>{s}</span></div>
+          ))}
+        </div>
+        <div className="sys-panel glass">
+          <h4>Últimas actualizaciones</h4>
+          {[['PGE 2026 indexado','Hace 2 días'],['CCAA Murcia actualizado','Hace 5 días'],['AIReF informe Q1','Hace 1 semana'],['Vectores recalculados','Hace 1 semana'],['Caché purgada','Hace 2 semanas']].map(([n,w])=>(
+            <div key={n} className="sys-item"><span>{n}</span><span style={{fontSize:'.72rem',color:'var(--text-muted)'}}>{w}</span></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocumentosTab() {
+  const [phase, setPhase] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [dragover, setDragover] = useState(false);
+  const [toast, setToast] = useState(false);
+  const fileRef = useRef(null);
+
+  const runUpload = () => {
+    if (uploading) return;
+    setUploading(true);
+    setProgress(0);
+    const phases = [
+      [0, 15, 'Validando documento...'],
+      [15, 40, 'Extrayendo texto...'],
+      [40, 75, 'Generando embeddings...'],
+      [75, 95, 'Indexando en ChromaDB...'],
+      [95, 100, '¡Indexación completada!'],
+    ];
+    let i = 0;
+    const run = () => {
+      if (i >= phases.length) {
+        spawnConfetti();
+        setToast(true);
+        setTimeout(() => { setToast(false); setUploading(false); setProgress(0); setPhase(''); }, 3000);
+        return;
+      }
+      const [from, to, label] = phases[i];
+      setPhase(label);
+      let p = from;
+      const step = () => {
+        p += 1.2;
+        if (p >= to) { setProgress(to); i++; setTimeout(run, 200); return; }
+        setProgress(p);
+        setTimeout(step, 20);
+      };
+      step();
+    };
+    run();
+  };
+
+  const spawnConfetti = () => {
+    for (let i = 0; i < 15; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = '64px';
+      el.style.background = Math.random() > 0.5 ? '#F59E0B' : '#007AFF';
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      el.style.animationDelay = (Math.random() * 0.5) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+  };
+
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      {toast && <div className="toast">✅ Documento indexado correctamente</div>}
+      <div className="docs-list">
+        {DOCS.map((doc,i)=>(
+          <div key={i} className="doc-item glass" style={{animationDelay:`${i*.06}s`}}>
+            <div className="doc-icon">📄</div>
+            <div className="doc-info">
+              <div className="doc-name">{doc.name}</div>
+              <div className="doc-meta">{doc.meta}</div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <div className="doc-badge">{doc.chunks.toLocaleString()} chunks</div>
+              <div style={{fontSize:'.72rem',color:'var(--text-muted)',marginTop:4}}>{doc.size}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div
+        className={`upload-zone ${dragover?'dragover':''}`}
+        onClick={() => !uploading && fileRef.current?.click()}
+        onDragOver={e=>{e.preventDefault();setDragover(true)}}
+        onDragLeave={()=>setDragover(false)}
+        onDrop={e=>{e.preventDefault();setDragover(false);runUpload();}}
+      >
+        <input ref={fileRef} type="file" accept=".pdf" style={{display:'none'}} onChange={runUpload} />
+        {!uploading ? (
+          <>
+            <div className="upload-icon">📄</div>
+            <div className="upload-text">Arrastra un PDF aquí o haz click para seleccionar</div>
+            <div className="upload-sub">PDF · Máximo 50 MB · Documentos presupuestarios oficiales</div>
+          </>
+        ) : (
+          <div style={{width:'100%',maxWidth:400,margin:'0 auto'}}>
+            <div style={{textAlign:'center',marginBottom:12}}>
+              <div style={{fontSize:'2rem',marginBottom:8}}>⚙️</div>
+              <div style={{fontFamily:'Playfair Display,serif',fontWeight:600,fontSize:'1rem',marginBottom:4}}>Procesando documento</div>
+            </div>
+            <div className="progress-wrap active">
+              <div className="progress-phase">{phase}</div>
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill" style={{width:`${progress}%`}} />
+              </div>
+              <div style={{fontSize:'.72rem',color:'var(--text-muted)',marginTop:6,textAlign:'right'}}>{Math.round(progress)}%</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VectoresTab() {
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      <div className="vectores-panel glass">
+        <div className="v-dots"/>
+        <div style={{position:'relative',zIndex:1,textAlign:'center'}}>
+          <div className="v-sphere"/>
+          <div style={{fontFamily:'Playfair Display,serif',fontSize:'.95rem',color:'var(--text-secondary)',fontStyle:'italic'}}>Espacio vectorial ChromaDB</div>
+          <div style={{fontSize:'.78rem',color:'var(--text-muted)',marginTop:4}}>8.407 embeddings · Modelo text-embedding-3-small</div>
+          <div className="v-stats">
+            {[['1536','Dimensiones','var(--blue)'],['top-5','Similitud k','var(--amber)'],['0.87','Score medio','#22c55e']].map(([v,l,c])=>(
+              <div key={l} style={{textAlign:'center'}}>
+                <div className="v-stat-val" style={{color:c}}>{v}</div>
+                <div className="v-stat-lbl">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PipelineTab() {
+  const steps = [
+    {icon:'📄',label:'PDFs\nOficiales',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
+    {icon:'✂️',label:'Chunks\nTexto',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
+    {icon:'🔢',label:'Embed\nings',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
+    {icon:'🗄️',label:'Chroma\nDB',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
+    {icon:'❓',label:'Pregunta\nUsuario',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
+    {icon:'🔍',label:'Similitud\nSemán.',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
+    {icon:'🤖',label:'GPT-4o\nmini',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
+    {icon:'💬',label:'Respuesta\nFinal',c:'rgba(22,163,74,.08)',b:'rgba(22,163,74,.2)'},
+  ];
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      <div className="rag-wrap glass">
+        <div className="rag-title">Pipeline RAG — Arquitectura del sistema</div>
+        <div className="rag-pipe">
+          {steps.map((s,i)=>(
+            <React.Fragment key={i}>
+              <div className="rag-step" style={{animationDelay:`${i*.1}s`}}>
+                <div className="rag-box" style={{background:s.c,border:`1px solid ${s.b}`}}>
+                  <div className="rag-ico">{s.icon}</div>
+                  <div className="rag-lbl">{s.label}</div>
+                </div>
+              </div>
+              {i<steps.length-1 && <div className="rag-arr" style={{animationDelay:`${i*.1+.05}s`}}><div className="rag-dot" style={{animationDelay:`${i*.25}s`}}/></div>}
+            </React.Fragment>
+          ))}
+        </div>
+        <div className="rag-descs">
+          {[['Fragmentación','Chunks de 1024 tokens, solapamiento 128 tokens para preservar contexto.'],['Embeddings','OpenAI text-embedding-3-small genera vectores de 1536 dimensiones por chunk.'],['Recuperación','Búsqueda coseno sobre ChromaDB, recuperando los top-5 chunks más similares.'],['Generación','GPT-4o-mini recibe contexto recuperado + pregunta y genera respuesta fundamentada.']].map(([l,d])=>(
+            <div key={l} className="rag-desc glass"><div className="rag-desc-lbl">{l}</div><p>{d}</p></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ CHAT TÉCNICO ══
+const TECH_PHASES = [
+  '⚡ Generando embedding de la pregunta...',
+  '🔍 Buscando similitud coseno en ChromaDB...',
+  '📦 Top 6 chunks recuperados',
+  '🧠 Construyendo prompt para GPT-4o-mini...',
+  '✅ Respuesta generada',
+];
+const MOCK_CHUNKS = [
+  {doc:'PGE_2026_Proyecto_Ley.pdf',page:142,sim:0.91,text:'El total de créditos del Presupuesto de Gastos para el ejercicio 2026 asciende a 487.320 millones de euros, lo que representa un incremento del 3,2% respecto al ejercicio anterior. De este importe, el 68,4% corresponde a gastos consolidados...'},
+  {doc:'Presupuestos_Andalucia_2026.pdf',page:23,sim:0.87,text:'El presupuesto de la Comunidad Autónoma de Andalucía para 2026 asciende a 47.823 millones de euros en créditos iniciales, con un incremento del 4,1% sobre el presupuesto aprobado para 2025...'},
+  {doc:'Liquidacion_CCAA_2024.pdf',page:67,sim:0.79,text:'La liquidación definitiva del sistema de financiación autonómica para el ejercicio 2024 arroja un resultado conjunto de las CCAA de régimen común con un déficit del 0,6% del PIB...'},
+  {doc:'Informe_Estabilidad_Presup_2025.pdf',page:12,sim:0.74,text:'Según las previsiones del Marco Presupuestario a medio plazo, el saldo de las Administraciones Públicas mejorará progresivamente hasta alcanzar el equilibrio presupuestario en 2027...'},
+  {doc:'PGE_2026_Proyecto_Ley.pdf',page:287,sim:0.68,text:'Los créditos destinados a financiar operaciones de capital de las entidades que integran el sector público empresarial y fundacional del Estado se cifran en 12.456 millones de euros...'},
+  {doc:'CCAA_Deuda_Historico_2010-2025.pdf',page:8,sim:0.62,text:'La deuda de las CCAA representó el 24,8% del PIB en 2024, frente al 26,1% del ejercicio anterior. Las comunidades con mayor endeudamiento relativo son Valencia (45,2%), Murcia (34,7%) y Castilla-La Mancha (31,9%)...'},
+];
+
+function TecnicoTab() {
+  const { messages, input, setInput, typing, send, msgEndRef } = useChat('Bienvenido al chat técnico. Puedes hacer consultas y observar en tiempo real las fases del pipeline RAG, los chunks recuperados y las métricas de coherencia.');
+  const [phases, setPhases] = useState(Array(5).fill('idle'));
+  const [chunks, setChunks] = useState([]);
+  const [sessionStats, setSessionStats] = useState({ total: 0, simMedia: 0, tiempoMedio: 0, evals: [] });
+  const [showChunks, setShowChunks] = useState(false);
+
+  const handleSend = () => {
+    const delay = send(null, (resp) => {
+      setSessionStats(prev => {
+        const newTime = 1600 + Math.random() * 800;
+        const newSim = 0.72 + Math.random() * 0.18;
+        const total = prev.total + 1;
+        const simMedia = (prev.simMedia * prev.total + newSim) / total;
+        const tiempoMedio = (prev.tiempoMedio * prev.total + newTime) / total;
+        return {
+          total,
+          simMedia: simMedia,
+          tiempoMedio: Math.round(tiempoMedio),
+          evals: [...prev.evals, { q: messages[messages.length-1]?.text || '...', sim: newSim, time: Math.round(newTime) }].slice(-5)
+        };
+      });
+    });
+    if (!delay) return;
+    // Run phases
+    setPhases(Array(5).fill('idle'));
+    setShowChunks(false);
+    setChunks([]);
+    [0,600,1200,1800,delay-100].forEach((t,i) => {
+      setTimeout(() => setPhases(prev => prev.map((p,j) => j===i?'active':(j<i?'done':p))), t);
+    });
+    setTimeout(() => { setShowChunks(true); setChunks(MOCK_CHUNKS); }, 1200);
+    setTimeout(() => setPhases(Array(5).fill('done')), delay);
+  };
+
+  const getVerdict = (sim) => {
+    if (sim > 0.8) return {label:'✅ Coherente',style:{background:'rgba(22,163,74,.1)',color:'#166534'}};
+    if (sim > 0.6) return {label:'⚠️ Parcial',style:{background:'rgba(245,158,11,.1)',color:'#92400e'}};
+    return {label:'❌ Incoherente',style:{background:'rgba(239,68,68,.1)',color:'#991b1b'}};
+  };
+
+  const simColor = (sim) => sim > 0.8 ? '#22c55e' : sim > 0.6 ? '#F59E0B' : '#ef4444';
+
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      <div className="tech-layout">
+        {/* Left: chat */}
+        <div className="tech-chat glass-lg">
+          <div className="chat-header">
+            <h2>Chat Técnico</h2>
+            <p>Consulta con análisis en tiempo real del pipeline</p>
+          </div>
+          <ChatMessages messages={messages} typing={typing} msgEndRef={msgEndRef} compact />
+          <div className="chat-input-area">
+            <div className="chat-pill">
+              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSend()} placeholder="Haz una consulta para ver el pipeline..." />
+              <button className="send-btn" onClick={handleSend}><SendIcon/></button>
+            </div>
+          </div>
+        </div>
+        {/* Right: analysis panel */}
+        <div className="tech-panel glass" style={{gap:16}}>
+          {/* Block 1: Pipeline phases */}
+          <div className="glass" style={{borderRadius:14,padding:16}}>
+            <div style={{fontSize:'.75rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-secondary)',marginBottom:12}}>Pipeline RAG</div>
+            {TECH_PHASES.map((ph,i)=>(
+              <div key={i} className="phase-item" style={{background:phases[i]==='active'?'rgba(245,158,11,.06)':phases[i]==='done'?'rgba(22,163,74,.04)':'transparent'}}>
+                <div className={`phase-dot ${phases[i]==='active'?'active':''} ${phases[i]==='done'?'done':''}`}/>
+                <span className={`phase-text ${phases[i]==='active'?'active':''} ${phases[i]==='done'?'done':''}`}>{ph}</span>
+                {phases[i]==='done' && <span style={{marginLeft:'auto',fontSize:'.7rem',color:'#22c55e'}}>✓</span>}
+              </div>
+            ))}
+          </div>
+          {/* Block 2: Chunks */}
+          {showChunks && (
+            <div className="glass" style={{borderRadius:14,padding:16}}>
+              <div style={{fontSize:'.75rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-secondary)',marginBottom:10}}>Chunks recuperados</div>
+              <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:220,overflowY:'auto'}}>
+                {chunks.map((c,i)=>(
+                  <div key={i} className="chunk-card glass" style={{animationDelay:`${i*.06}s`}}>
+                    <div className="chunk-header">
+                      <span className="chunk-source">{c.doc.split('.')[0].slice(0,25)}</span>
+                      <span style={{fontSize:'.7rem',color:'var(--text-muted)'}}>p.{c.page}</span>
+                    </div>
+                    <div className="sim-bar-bg">
+                      <div className="sim-bar-fill" style={{width:`${c.sim*100}%`,background:simColor(c.sim)}}/>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
+                      <span style={{fontSize:'.68rem',color:simColor(c.sim),fontWeight:600}}>Similitud {Math.round(c.sim*100)}%</span>
+                    </div>
+                    <div className="chunk-text">{c.text.slice(0,100)}...</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Block 3: Session metrics */}
+          <div className="glass" style={{borderRadius:14,padding:16}}>
+            <div style={{fontSize:'.75rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-secondary)',marginBottom:10}}>Métricas de sesión</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
+              {[['Consultas',sessionStats.total],['Sim. media',sessionStats.simMedia?(sessionStats.simMedia*100).toFixed(0)+'%':'—'],['T. medio',sessionStats.tiempoMedio?sessionStats.tiempoMedio+'ms':'—']].map(([l,v])=>(
+                <div key={l} style={{textAlign:'center',background:'rgba(255,255,255,.4)',borderRadius:10,padding:'8px 4px'}}>
+                  <div style={{fontFamily:'Playfair Display,serif',fontSize:'1.1rem',fontWeight:600}}>{v}</div>
+                  <div style={{fontSize:'.65rem',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.05em'}}>{l}</div>
+                </div>
+              ))}
+            </div>
+            {sessionStats.evals.length > 0 && (
+              <div>
+                <div style={{fontSize:'.7rem',color:'var(--text-muted)',marginBottom:6,fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em'}}>Evaluaciones</div>
+                {sessionStats.evals.map((e,i) => {
+                  const v = getVerdict(e.sim);
+                  return (
+                    <div key={i} className="session-row">
+                      <span style={{flex:1,marginRight:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'.74rem'}}>{e.q.slice(0,40)}...</span>
+                      <span className="eval-verdict" style={v.style}>{v.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ INSIGHTS ══
+const TAGS = [
+  {label:'Sanidad',freq:34,c:'rgba(0,122,255,.12)',tc:'#0057b8',delay:'0s'},
+  {label:'Educación',freq:28,c:'rgba(245,158,11,.12)',tc:'#92400e',delay:'.5s'},
+  {label:'Infraestructuras',freq:22,c:'rgba(22,163,74,.1)',tc:'#166534',delay:'1s'},
+  {label:'Pensiones',freq:19,c:'rgba(0,122,255,.08)',tc:'#0057b8',delay:'1.5s'},
+  {label:'Empleo',freq:15,c:'rgba(245,158,11,.08)',tc:'#92400e',delay:'2s'},
+  {label:'Vivienda',freq:12,c:'rgba(139,92,246,.1)',tc:'#5b21b6',delay:'.3s'},
+  {label:'Cultura',freq:8,c:'rgba(22,163,74,.07)',tc:'#166534',delay:'.8s'},
+  {label:'Medioambiente',freq:7,c:'rgba(0,122,255,.07)',tc:'#0057b8',delay:'1.2s'},
+  {label:'Deporte',freq:5,c:'rgba(245,158,11,.07)',tc:'#92400e',delay:'1.7s'},
+  {label:'Tecnología',freq:4,c:'rgba(139,92,246,.08)',tc:'#5b21b6',delay:'2.2s'},
+];
+const EVAL_LOG = [
+  {q:'¿Cuánto gasta Madrid en sanidad?',sim:91,coh:94,ts:'10:42'},
+  {q:'Presupuesto educación Andalucía 2026',sim:88,coh:91,ts:'10:38'},
+  {q:'Déficit CCAA histórico',sim:83,coh:87,ts:'10:31'},
+  {q:'Fondos europeos distribución regional',sim:79,coh:82,ts:'10:25'},
+  {q:'Inversión en infraestructuras 2026',sim:74,coh:76,ts:'10:19'},
+  {q:'Gasto social per cápita por CCAA',sim:71,coh:73,ts:'10:12'},
+  {q:'Presupuesto Castilla y León sanidad',sim:68,coh:70,ts:'09:58'},
+  {q:'Deuda autonómica Comunidad Valenciana',sim:65,coh:67,ts:'09:44'},
+  {q:'Evolución gasto pensiones 2024-2026',sim:58,coh:55,ts:'09:33'},
+  {q:'Transferencias interterritoriales 2025',sim:54,coh:51,ts:'09:21'},
+];
+
+function InsightsTab() {
+  const getVerdict = (sim) => {
+    if (sim > 80) return {label:'✅ Coherente',style:{background:'rgba(22,163,74,.1)',color:'#166534'}};
+    if (sim > 60) return {label:'⚠️ Parcial',style:{background:'rgba(245,158,11,.1)',color:'#92400e'}};
+    return {label:'❌ Incoherente',style:{background:'rgba(239,68,68,.1)',color:'#991b1b'}};
+  };
+  return (
+    <div style={{animation:'secIn .4s ease both'}}>
+      <div className="insights-wrap">
+        <div className="ins-header">Inteligencia sobre el sistema</div>
+        <div className="ins-metrics">
+          {[
+            {val:'Sanidad',sub:'34% de las consultas',lbl:'Tema más consultado',c:'var(--blue)'},
+            {val:'87.4%',sub:'Sobre 248 evaluaciones',lbl:'Coherencia media',c:'#22c55e'},
+            {val:'8',sub:'3.2% del total',lbl:'Sin respuesta suficiente',c:'var(--amber)'},
+          ].map((m,i)=>(
+            <div key={i} className="ins-metric glass" style={{animationDelay:`${i*.08}s`}}>
+              <div className="ins-metric-val" style={{color:m.c}}>{m.val}</div>
+              <div className="ins-metric-lbl">{m.lbl}</div>
+              <div className="ins-metric-sub">{m.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="ins-section-title">Temas detectados</div>
+        <div className="glass" style={{borderRadius:20,padding:'4px 8px'}}>
+          <div className="tag-cloud">
+            {TAGS.map(t=>(
+              <div key={t.label} className="tag-bubble" style={{background:t.c,color:t.tc,border:`1px solid ${t.c.replace('.1','.25')}`,fontSize:`${.7+t.freq/80}rem`,padding:`${6+t.freq/12}px ${12+t.freq/8}px`,animationDelay:t.delay}}>
+                {t.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="ins-section-title">Log de evaluaciones</div>
+        <div className="glass" style={{borderRadius:20,overflow:'hidden'}}>
+          <table className="eval-table">
+            <thead><tr><th>Pregunta</th><th>Similitud</th><th>Coherencia</th><th>Veredicto</th><th>Hora</th></tr></thead>
+            <tbody>
+              {EVAL_LOG.map((e,i)=>{
+                const v = getVerdict(e.sim);
+                return (
+                  <tr key={i}>
+                    <td style={{maxWidth:240,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.q}</td>
+                    <td><span style={{color:e.sim>80?'#22c55e':e.sim>60?'#F59E0B':'#ef4444',fontWeight:600}}>{e.sim}%</span></td>
+                    <td><span style={{color:e.coh>80?'#22c55e':e.coh>60?'#F59E0B':'#ef4444',fontWeight:600}}>{e.coh}%</span></td>
+                    <td><span className="eval-verdict" style={v.style}>{v.label}</span></td>
+                    <td style={{color:'var(--text-muted)'}}>{e.ts}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="ins-section-title">Alertas del sistema</div>
+        <div className="glass" style={{borderRadius:20,padding:16}}>
+          {[
+            {ico:'⚠️',text:'3 consultas con similitud < 60% en las últimas 24h',bg:'rgba(245,158,11,.06)',border:'rgba(245,158,11,.15)'},
+            {ico:'ℹ️',text:'Documento "Castilla y León" no consultado en 7 días',bg:'rgba(0,122,255,.04)',border:'rgba(0,122,255,.12)'},
+            {ico:'✅',text:'Pipeline ejecutado correctamente hace 2 días',bg:'rgba(22,163,74,.04)',border:'rgba(22,163,74,.12)'},
+          ].map((a,i)=>(
+            <div key={i} className="alert-item" style={{background:a.bg,border:`1px solid ${a.border}`,borderRadius:12}}>
+              <span style={{fontSize:18,flexShrink:0}}>{a.ico}</span>
+              <span style={{fontSize:'.82rem',color:'var(--text-secondary)'}}>{a.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══ MAIN APP ══
+function App() {
+  const [activeTab, setActiveTab] = useState('ciudadano');
+  const [banner, setBanner] = useState(true);
+  const tabs = [
+    {id:'ciudadano',label:'CIUDADANO'},
+    {id:'compliance',label:'COMPLIANCE'},
+    {id:'mantenimiento',label:'MANTENIMIENTO'},
+  ];
+  return (
+    <>
+      <nav>
+        <div className="nav-logo">🔮 Ecosistema de Cristal</div>
+        <div className="nav-tabs">
+          {tabs.map(t=>(
+            <button key={t.id} className={`nav-tab ${activeTab===t.id?'active':''}`} onClick={()=>setActiveTab(t.id)}>
+              {t.label}
+              {activeTab===t.id && <div className="nav-underline" key={t.id+'-ul'}/>}
+            </button>
+          ))}
+        </div>
+      </nav>
+      <div className="content">
+        {activeTab==='ciudadano' && <CiudadanoSection key="c"/>}
+        {activeTab==='compliance' && <ComplianceSection key="co"/>}
+        {activeTab==='mantenimiento' && <MantenimientoSection key="m"/>}
+      </div>
+      {banner && (
+        <div className="legal-banner">
+          <span style={{fontSize:22,flexShrink:0}}>🔒</span>
+          <div style={{flex:1}}>
+            <p style={{fontSize:'.82rem',fontWeight:600,marginBottom:2}}>Información con fines educativos y de transparencia ciudadana</p>
+            <p style={{fontSize:'.74rem',color:'var(--text-secondary)'}}>Esta plataforma utiliza datos públicos oficiales. No almacena datos personales ni realiza seguimiento de usuarios.</p>
+          </div>
+          <button className="banner-btn" onClick={()=>setBanner(false)}>Entendido</button>
+        </div>
+      )}
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('app'));
+root.render(<App/>);
+</script>
+</body>
+</html>
