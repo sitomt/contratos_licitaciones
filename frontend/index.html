@@ -464,7 +464,8 @@ fetch('/api/health').then(r=>r.json()).then(d=>{
 <script type="text/babel">
 const { useState, useRef, useEffect, useCallback } = React;
 
-const APPROVED = ['Andalucía','Madrid','Castilla y León','Castilla-La Mancha','Extremadura','La Rioja','Murcia'];
+const INDEXADAS = ['Andalucía','Madrid','Castilla y León'];
+const APROBADAS_NO_INDEXADAS = ['Castilla-La Mancha','Extremadura','La Rioja','Murcia'];
 const PRORROGADO = ['Cataluña','País Vasco','Galicia','Aragón','Asturias','Cantabria','Navarra','Baleares','Canarias','Comunidad Valenciana','Ceuta','Melilla'];
 
 const INITIAL_PILLS = [
@@ -651,9 +652,15 @@ function CiudadanoSection() {
             <h3>📊 Estado presupuestos</h3>
             <div style={{marginBottom:12}}>
               <div className="budget-sec-lbl ap" style={{marginBottom:6}}>
-                <span style={{background:'rgba(22,163,74,.15)',color:'#166534',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>✓ APROBADO 2026</span>
+                <span style={{background:'rgba(22,163,74,.15)',color:'#166534',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>🔍 INDEXADAS — disponibles en el chat</span>
               </div>
-              <div className="region-pills">{APPROVED.map(r=><span key={r} className="rpill ap">{r}</span>)}</div>
+              <div className="region-pills">{INDEXADAS.map(r=><span key={r} className="rpill ap">{r}</span>)}</div>
+            </div>
+            <div style={{marginBottom:12}}>
+              <div className="budget-sec-lbl" style={{marginBottom:6,color:'var(--blue)'}}>
+                <span style={{background:'rgba(0,122,255,.1)',color:'#0057b8',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>✓ APROBADO 2026 — sin indexar</span>
+              </div>
+              <div className="region-pills">{APROBADAS_NO_INDEXADAS.map(r=><span key={r} style={{fontSize:'.7rem',padding:'3px 9px',borderRadius:99,fontWeight:500,background:'rgba(0,122,255,.08)',color:'#0057b8',border:'1px solid rgba(0,122,255,.2)'}}>{r}</span>)}</div>
             </div>
             <div>
               <div className="budget-sec-lbl pr" style={{marginBottom:6}}>
@@ -730,14 +737,14 @@ const COMP_DATA = [
   {
     icon:'🏛️', bg:'rgba(22,163,74,.07)', badge:'Fuentes oficiales', badgeStyle:{background:'rgba(22,163,74,.08)',color:'#166534'},
     title:'Fuentes de información',
-    short:'Presupuestos oficiales de Andalucía, Castilla-La Mancha, Castilla y León y Comunidad de Madrid.',
+    short:'Presupuestos oficiales de Andalucía, Castilla y León y Comunidad de Madrid — indexados y disponibles en el chat.',
     expandContent: () => (
       <div>
         {[
           ['📄','Andalucía 2026','Junta de Andalucía','presupuesto.juntadeandalucia.es'],
-          ['📄','Castilla-La Mancha 2026','Junta de C-LM','hacienda.castillalamancha.es'],
           ['📄','Castilla y León 2026','Junta de CyL','hacienda.jcyl.es'],
-          ['📄','Madrid 2026','Comunidad de Madrid','presupuestos.comunidad.madrid'],
+          ['📄','Madrid 2026 (presupuesto)','Comunidad de Madrid','presupuestos.comunidad.madrid'],
+          ['📄','Madrid 2026 (resumen)','Comunidad de Madrid','presupuestos.comunidad.madrid'],
         ].map(([ico,nom,org,url])=>(
           <div key={nom} style={{padding:'10px 0',borderBottom:'1px solid rgba(0,0,0,.05)',display:'flex',gap:10,alignItems:'flex-start'}}>
             <span>{ico}</span>

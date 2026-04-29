@@ -60,7 +60,6 @@ COMUNIDADES_FUENTES = {
     "andalucia": ["andalucia.pdf"],
     "madrid": ["presupuestos_generales_2026.pdf", "resumen_ingresos_y_gastos.pdf"],
     "castillayleon": ["castillayleon.pdf"],
-    "castilla y leon": ["castillayleon.pdf"],
 }
 
 KEYWORDS_COMUNIDADES = {
@@ -72,7 +71,7 @@ KEYWORDS_COMUNIDADES = {
 
 KEYWORDS_COMPARATIVA = [
     "compara", "comparar", "diferencia", "más que", "menos que",
-    "mayor que", "menor que", "versus", "vs", "entre", "todas",
+    "mayor que", "menor que", "versus", "vs", "todas",
     "cada comunidad", "qué comunidad", "cuál comunidad",
 ]
 
@@ -103,24 +102,31 @@ def es_comparativa(pregunta: str) -> bool:
 def _procesar_resultados(resultados: dict) -> list:
     chunks = []
     docs = resultados["documents"][0] if resultados["documents"] else []
-    for i in range(len(docs)):
-        meta = resultados["metadatas"][0][i] if resultados["metadatas"] else {}
+    metas = resultados["metadatas"][0] if resultados["metadatas"] else []
+    dists = resultados["distances"][0] if resultados["distances"] else []
+    for i, doc in enumerate(docs):
+        meta = metas[i] if i < len(metas) else {}
         chunks.append({
-            "texto": docs[i],
+            "texto": doc,
             "fuente": meta.get("fuente", ""),
             "pagina": meta.get("pagina", 0),
-            "distancia": resultados["distances"][0][i],
+            "distancia": dists[i],
         })
     return chunks
 
 
 def busqueda_balanceada(vector_pregunta: list, comunidades: list, comparativa: bool) -> tuple:
-    if not comunidades and not comparativa:
-        resultados = coleccion.query(
+    MAX_CHUNKS_TOTAL = 12  # techo de seguridad para el contexto del LLM
+
+    def query_global():
+        r = coleccion.query(
             query_embeddings=[vector_pregunta], n_results=6,
             include=["documents", "metadatas", "distances"]
         )
-        return _procesar_resultados(resultados), "global"
+        return _procesar_resultados(r)
+
+    if not comunidades and not comparativa:
+        return query_global(), "global"
 
     if len(comunidades) == 1 and not comparativa:
         fuentes = COMUNIDADES_FUENTES.get(comunidades[0], [])
@@ -133,22 +139,18 @@ def busqueda_balanceada(vector_pregunta: list, comunidades: list, comparativa: b
             chunks = _procesar_resultados(resultados)
             if chunks:
                 return chunks, f"filtrado_{comunidades[0]}"
-        except Exception:
-            pass
-        resultados = coleccion.query(
-            query_embeddings=[vector_pregunta], n_results=6,
-            include=["documents", "metadatas", "distances"]
-        )
-        return _procesar_resultados(resultados), "global_fallback"
+        except Exception as e:
+            print(f"[busqueda_balanceada] filtro fallido para '{comunidades[0]}': {e}")
+        return query_global(), "global_fallback"
+
+    if comunidades:
+        comunidades_a_consultar = comunidades
+        n_por_comunidad = max(2, 6 // len(comunidades))
+    else:
+        comunidades_a_consultar = list(COMUNIDADES_FUENTES.keys())
+        n_por_comunidad = 2
 
     chunks_por_comunidad = []
-    if comunidades:
-        n_por_comunidad = max(2, 6 // len(comunidades))
-        comunidades_a_consultar = comunidades
-    else:
-        n_por_comunidad = 2
-        comunidades_a_consultar = list(dict.fromkeys(COMUNIDADES_FUENTES.keys()))
-
     for comunidad in comunidades_a_consultar:
         fuentes = COMUNIDADES_FUENTES.get(comunidad, [])
         if not fuentes:
@@ -160,18 +162,15 @@ def busqueda_balanceada(vector_pregunta: list, comunidades: list, comparativa: b
                 where=where_filter, include=["documents", "metadatas", "distances"]
             )
             chunks_por_comunidad.extend(_procesar_resultados(resultados))
-        except Exception:
+        except Exception as e:
+            print(f"[busqueda_balanceada] filtro fallido para '{comunidad}': {e}")
             continue
 
     if not chunks_por_comunidad:
-        resultados = coleccion.query(
-            query_embeddings=[vector_pregunta], n_results=6,
-            include=["documents", "metadatas", "distances"]
-        )
-        return _procesar_resultados(resultados), "global_fallback"
+        return query_global(), "global_fallback"
 
     chunks_por_comunidad.sort(key=lambda x: x["distancia"])
-    return chunks_por_comunidad, f"balanceado_{len(comunidades_a_consultar)}comunidades"
+    return chunks_por_comunidad[:MAX_CHUNKS_TOTAL], f"balanceado_{len(comunidades_a_consultar)}comunidades"
 
 
 def init_db():
@@ -451,6 +450,13 @@ def metrics():
     """)
     feedbacks_negativos = cur.fetchone()[0]
 
+    cur.execute("""
+        SELECT estrategia_busqueda, COUNT(*) as cnt FROM conversaciones
+        WHERE estrategia_busqueda IS NOT NULL
+        GROUP BY estrategia_busqueda ORDER BY cnt DESC
+    """)
+    estrategias = [{"estrategia": r[0], "count": r[1]} for r in cur.fetchall()]
+
     conn.close()
     return {
         "total_consultas": total,
@@ -461,6 +467,7 @@ def metrics():
         "pct_coherentes": pct_coherentes,
         "temas_top": temas,
         "logs_recientes": logs,
+        "estrategias_busqueda": estrategias,
         "alertas": {
             "baja_similitud_24h": alertas_baja,
             "feedbacks_negativos_7d": feedbacks_negativos,
