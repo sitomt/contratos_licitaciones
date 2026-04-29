@@ -23,7 +23,7 @@ Sistema RAG de transparencia pública con dos bloques:
 | LLM narrativizador | GPT-4o | ejecución única al procesar PDFs — convierte tablas a prosa |
 | Reducción dim. | PCA (sklearn) | reemplazó a UMAP — ver decisiones técnicas |
 | Backend | FastAPI 0.115 + Uvicorn | puerto 8000 |
-| Frontend | React 19 + Vite 8 + Tailwind 4 | puerto 5173 (o 5174 si está ocupado) |
+| Frontend | Standalone HTML (`frontend/index.html`) — React 18 CDN + Babel standalone | sin build step en dev; `npm run build` para producción |
 | Visualización | plotly.js 3.x | importado directo — ver decisiones técnicas |
 | OS / entorno | macOS, VSCode | — |
 
@@ -48,7 +48,11 @@ data/raw/*.pdf
 ```
 pregunta usuario
   → embed pregunta directamente (OpenAI text-embedding-3-small)
-  → ChromaDB query (top-6 chunks, similitud coseno)
+  → detectar_comunidades() + es_comparativa()
+  → busqueda_balanceada(): ChromaDB query(s) con estrategia adaptada
+      • 0 comunidades, no comparativa → top-6 global
+      • 1 comunidad → top-6 filtrado por esa comunidad (where fuente)
+      • 2+ comunidades o comparativa → top-N por comunidad, balanceado
   → prompt = contexto_chunks + pregunta
   → GPT-4o-mini → respuesta con cita de página
 ```
@@ -58,18 +62,17 @@ pregunta usuario
 - Solapamiento: 50 tokens (10%)
 - Tablas: 1 chunk por tabla, narrativizado a prosa con GPT-4o antes de vectorizar
 - Chunks recuperados en query: **n=6**
-- Total vectores actuales: **pendiente de reconstrucción** (BD debe regenerarse con los nuevos PDFs)
+- Total vectores actuales: **1621** (BD reconstruida con los nuevos PDFs)
 
 ### Documentos indexados
-| Fichero | Descripción | Notas |
-|---------|-------------|-------|
-| `presupuestos_generales_2026.pdf` | Presupuestos Generales Madrid 2026 | 50 páginas |
-| `resumen_ingresos_y_gastos.pdf` | Resumen ingresos/gastos Madrid | 3 páginas |
-| `andalucia.pdf` | Presupuestos Comunidad de Andalucía 2026 | Narrativo CCAA |
-| `castillalamancha.pdf` | Presupuestos Castilla-La Mancha 2026 | Narrativo CCAA |
-| `castillayleon.pdf` | Presupuestos Castilla y León 2026 | Narrativo CCAA |
+| Fichero | Descripción | Chunks |
+|---------|-------------|--------|
+| `andalucia.pdf` | Presupuestos Comunidad de Andalucía 2026 | 890 |
+| `castillayleon.pdf` | Presupuestos Castilla y León 2026 | 638 |
+| `presupuestos_generales_2026.pdf` | Presupuestos Generales Madrid 2026 | 87 |
+| `resumen_ingresos_y_gastos.pdf` | Resumen Ingresos y Gastos Madrid | 6 |
 
-> Los nuevos PDFs (`andalucia.pdf`, `castillalamancha.pdf`, `castillayleon.pdf`) son documentos narrativos publicados directamente por las comunidades autónomas. Su vocabulario ya es cercano al lenguaje natural, lo que simplificó el pipeline (eliminación de HyDE).
+> Total: **1621 vectores** en ChromaDB. Los PDFs son documentos narrativos publicados directamente por las comunidades autónomas. Su vocabulario ya es cercano al lenguaje natural, lo que simplificó el pipeline (eliminación de HyDE).
 
 ### Procesamiento incremental
 `pipeline.py` detecta si un PDF ya está en ChromaDB por la clave `fuente`. Si existe → salta. Si no → procesa y añade. No duplica vectores.
@@ -82,22 +85,15 @@ pregunta usuario
 Isdi-presupuestos/
 ├── api/
 │   ├── __init__.py
-│   └── server.py              ← FastAPI — endpoints /chat /vectores /health
+│   └── server.py              ← FastAPI — endpoints con prefijo /api/ (ver sección API REST)
 ├── data/
 │   ├── raw/                   ← PDFs fuente (NUNCA modificar)
 │   ├── processed/             ← JSONs intermedios (regenerables con pipeline.py)
 │   └── vectordb/              ← ChromaDB (regenerable con pipeline.py)
-├── frontend/                  ← React + Vite + Tailwind
-│   ├── src/
-│   │   ├── App.jsx            ← Raíz: header, tabs, modo ciudadano/técnico
-│   │   ├── components/
-│   │   │   ├── ChatPanel.jsx  ← Chat con el RAG, input, burbujas de mensaje
-│   │   │   ├── TechPanel.jsx  ← Panel técnico RAG: timeline de fases + chunks
-│   │   │   └── VectorMap.jsx  ← Visualización 3D Plotly de la base vectorial
-│   │   ├── index.css          ← Variables CSS globales, dark theme
-│   │   └── main.jsx
+├── frontend/
+│   ├── index.html             ← TODO el frontend: standalone HTML, React 18 CDN + Babel
 │   ├── package.json
-│   └── vite.config.js         ← puerto configurado: 5173
+│   └── vite.config.js         ← dev server puerto 5173, proxy /api/ → localhost:8000
 ├── src/
 │   ├── normalizador.py        ← ÚNICO MÓDULO ACTIVO: limpieza de texto plano pre-chunking
 │   ├── chatbot.py             ← legacy — interfaz conversacional terminal (no usado en flujo)
@@ -127,70 +123,117 @@ Isdi-presupuestos/
 
 ### Endpoints
 
-#### POST /chat
+> Todos los endpoints usan el prefijo `/api/`. El endpoint raíz `GET /` sirve `frontend/index.html`.
+
+#### POST /api/chat
 Responde preguntas sobre presupuestos usando el pipeline RAG completo.
 
 **Request**
 ```json
-{ "pregunta": "¿Cuánto destina Madrid a Sanidad?", "historial": [] }
+{ "pregunta": "¿Cuánto destina Madrid a Sanidad?", "historial": [], "sesion_id": "uuid-opcional" }
 ```
 **Response**
 ```json
 {
+  "id": 42,
+  "sesion_id": "uuid-de-sesion",
   "respuesta": "Texto generado por GPT-4o-mini...",
-  "chunks": [
-    { "texto": "...", "fuente": "presupuestos_generales_2026.pdf", "pagina": 12, "distancia": 0.23 }
-  ]
+  "chunks": [{ "texto": "...", "fuente": "...", "pagina": 12, "distancia": 0.23 }],
+  "fuentes": [{ "documento": "Presupuestos Generales Madrid 2026", "paginas": [12, 15] }],
+  "score_similitud_media": 87.4,
+  "latencia_ms": 1240,
+  "estrategia_busqueda": "filtrado_andalucia"
 }
 ```
-**Lógica**: embed pregunta directamente → ChromaDB top-6 → prompt + GPT-4o-mini (temperature=0.3)
+Valores posibles de `estrategia_busqueda`: `"global"` · `"filtrado_<comunidad>"` · `"balanceado_<N>comunidades"` · `"global_fallback"`
 
-#### GET /vectores
+**Lógica**: embed pregunta directamente → detección de comunidades y comparativa → `busqueda_balanceada()` → prompt + GPT-4o-mini (temperature=0.3)
+
+La recuperación es balanceada por comunidad cuando se detectan varias CCAA en la pregunta (ver Decisiones técnicas).
+
+#### GET /api/vectores
 Devuelve todos los vectores de ChromaDB reducidos a 3D con **PCA** (ya no UMAP).
 
 **Response**
 ```json
-{
-  "puntos": [
-    { "x": 1.23, "y": -0.45, "z": 2.11, "texto": "...", "fuente": "...", "pagina": 5 }
-  ]
-}
+{ "puntos": [{ "x": 1.23, "y": -0.45, "z": 2.11, "texto": "...", "fuente": "...", "pagina": 5 }] }
 ```
-**Nota**: La reducción PCA es instantánea (a diferencia de UMAP que tardaba ~10s).
 
-#### GET /health
-Comprueba que el servidor y ChromaDB están operativos.
-
-**Response**
+#### GET /api/health
 ```json
-{ "status": "ok", "vectores": 543 }
+{ "status": "ok", "vectores": 1621 }
 ```
+
+#### PATCH /api/feedback/{id}
+Registra feedback del usuario sobre una respuesta.
+```json
+{ "tipo": "positivo", "comentario": "opcional" }
+```
+
+#### GET /api/metrics
+Estadísticas globales: total consultas, score medio, latencia, coste, temas top, logs recientes, alertas.
+
+#### GET /api/documentos
+Lista los PDFs en `data/raw/` con su número de chunks indexados.
+
+#### POST /api/upload
+Sube un PDF a `data/raw/`. Requiere `python-multipart`.
+
+---
+
+## BASE DE DATOS SQLITE (`data/logs/conversaciones.db`)
+
+Tabla `conversaciones` — 22 columnas totales. La migración es **defensiva**: `init_db()` añade las columnas nuevas con `ALTER TABLE` envuelto en `try/except`, por lo que no rompe una BD existente.
+
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | INTEGER PK | autoincremento |
+| `sesion_id` | TEXT | UUID anónimo de sesión |
+| `timestamp` | DATETIME | UTC ISO |
+| `pregunta` | TEXT | pregunta del usuario |
+| `hipotesis_hyde` | TEXT | siempre NULL (conservado por compatibilidad con logs anteriores) |
+| `respuesta` | TEXT | respuesta generada |
+| `score_medio` | REAL | similitud media en porcentaje (0-100) |
+| `num_chunks` | INTEGER | chunks recuperados |
+| `fuentes` | TEXT | JSON de fuentes citadas |
+| `latencia_ms` | INTEGER | tiempo total de la request en ms |
+| `tokens_prompt` | INTEGER | tokens enviados a GPT |
+| `tokens_respuesta` | INTEGER | tokens generados por GPT |
+| `coste_estimado_eur` | REAL | coste estimado en euros |
+| `evaluacion_agente` | TEXT | "coherente" / "parcial" / "incoherente" |
+| `score_evaluacion` | REAL | igual que score_medio (alias) |
+| `tema_detectado` | TEXT | tema inferido por keywords |
+| `pregunta_respondida` | INTEGER | 1 si score≥70, 0 si no |
+| `longitud_respuesta` | INTEGER | caracteres de la respuesta |
+| `session_turno` | INTEGER | número de turno dentro de la sesión |
+| `feedback_tipo` | TEXT | "positivo" / "negativo" (actualizado por PATCH /api/feedback) |
+| `feedback_comentario` | TEXT | comentario opcional del usuario |
+| `estrategia_busqueda` | TEXT | estrategia RAG usada: `"global"` / `"filtrado_<comunidad>"` / `"balanceado_<N>comunidades"` / `"global_fallback"` |
 
 ---
 
 ## FRONTEND — Interfaz Web
 
 ### Stack
-- React 19 + Vite 8 + Tailwind CSS 4
-- Dark theme con variables CSS (definidas en `src/index.css`)
-- Visualización 3D: `plotly.js` importado directamente — ver decisiones técnicas
+- **Un único archivo**: `frontend/index.html` — sin componentes separados, sin build en desarrollo
+- React 18 via CDN (`unpkg.com/react@18.3.1`) + Babel standalone (`@babel/standalone@7.29.0`)
+- Plotly.js via CDN (`cdn.plot.ly/plotly-2.32.0.min.js`)
+- Estética "Liquid Glass": glassmorphism, fondo crema `#F8F7F4`, tipografías Playfair Display + DM Sans, acentos ámbar `#F59E0B` y azul `#007AFF`
 
-### Componentes principales
+### Estructura de navegación
+- **Top nav**: 3 secciones — CIUDADANO, COMPLIANCE, MANTENIMIENTO
+- **MANTENIMIENTO** tiene 6 sub-tabs:
+  - **Sistema**: métricas en tiempo real (`/api/metrics` + `/api/health`)
+  - **Documentos**: lista real de PDFs indexados + upload de nuevos PDFs
+  - **Vectores**: scatter 3D Plotly con datos reales de `/api/vectores`
+  - **Cómo funciona**: diagrama del pipeline RAG con parámetros reales
+  - **Chat Técnico**: chat con visualización de fases RAG + chunks recuperados reales
+  - **Insights**: tag cloud de temas, log de evaluaciones y alertas (desde `/api/metrics`)
 
-| Componente | Descripción |
-|-----------|-------------|
-| `App.jsx` | Layout principal: header, toggle ciudadano/técnico, tabs Chat/Vectores |
-| `ChatPanel.jsx` | Interfaz de chat: burbujas, pantalla de bienvenida, sugerencias, input |
-| `TechPanel.jsx` | Panel lateral técnico: timeline de fases RAG + chunks recuperados con similitud |
-| `VectorMap.jsx` | Visualización 3D Plotly: nube de puntos con color por documento, hover con texto |
-
-### Dos modos de usuario
-- **Ciudadano**: solo muestra el chat (panel técnico oculto)
-- **Técnico**: chat a 60% ancho + TechPanel a 40% mostrando el proceso RAG en tiempo real
-
-### Dos tabs
-- **Chat**: interfaz conversacional con el RAG
-- **Base de Datos Vectorial**: visualización 3D interactiva de los embeddings
+### Chat
+- Llamadas reales a `POST /api/chat`; fuentes mostradas como pills bajo cada respuesta
+- Thumbs up/down (`👍`/`👎`) con `PATCH /api/feedback/{id}` bajo cada respuesta del asistente
+- Spinner durante la espera; `sesion_id` persistido en ref durante la sesión
 
 ---
 
@@ -266,6 +309,22 @@ useEffect(() => {
 
 **No usar** `createPlotlyComponent` de `react-plotly.js` con Vite — produce errores de bundling.
 
+### Recuperación balanceada por comunidad
+
+El corpus está desbalanceado: Andalucía tiene 890 chunks vs 87 de Madrid. Con top-6 global, las preguntas comparativas devuelven principalmente chunks de Andalucía, sesgando la respuesta.
+
+**Solución** — `busqueda_balanceada()` en `api/server.py`:
+
+| Caso | Estrategia | Resultado |
+|------|-----------|-----------|
+| 0 comunidades, no comparativa | top-6 global | `"global"` |
+| 1 comunidad detectada | top-6 filtrado con `where fuente` | `"filtrado_<comunidad>"` |
+| 2 comunidades detectadas | top-3 de cada una (6 total) | `"balanceado_2comunidades"` |
+| 3 comunidades o comparativa general | top-2 de cada comunidad | `"balanceado_3comunidades"` |
+| Filtro falla (exception ChromaDB) | fallback a top-6 global | `"global_fallback"` |
+
+La estrategia usada se guarda en SQLite (`estrategia_busqueda`) y se devuelve en la respuesta JSON para auditoría. La detección de comunidades usa `KEYWORDS_COMUNIDADES` (keywords por comunidad) y `KEYWORDS_COMPARATIVA` (verbos de comparación).
+
 ### HyDE — implementado y luego eliminado
 
 HyDE (Hypothetical Document Embedding) fue implementado para reducir el mismatch entre el lenguaje natural del usuario y el vocabulario técnico de los PDFs. Se generaba un fragmento hipotético de documento oficial con GPT-4o-mini y se embebía ese fragmento en lugar de la pregunta.
@@ -278,25 +337,24 @@ HyDE (Hypothetical Document Embedding) fue implementado para reducir el mismatch
 
 ### Completado y funcional
 - [x] Pipeline RAG completo (extracción, chunking, narrativización de tablas, embedding, búsqueda)
-- [x] API REST con FastAPI (3 endpoints)
+- [x] API REST con FastAPI (endpoints chat, vectores, health, metrics, documentos, upload, feedback)
 - [x] Interfaz web React con modo ciudadano y técnico
 - [x] Visualización 3D de la base vectorial con PCA
 - [x] Panel técnico RAG en tiempo real (timeline de fases + chunks con similitud)
-- [x] Chat con preguntas sugeridas y cita automática de fuentes
+- [x] Chat con preguntas sugeridas rotativas y cita automática de fuentes
 - [x] Despliegue en VPS Hetzner — Nginx sirve frontend compilado, FastAPI como servicio systemd
 - [x] Narrativizador de tablas: `pipeline.py` convierte tablas a prosa con GPT-4o antes de vectorizar
-- [x] Logging anónimo de conversaciones en SQLite (`data/logs/conversaciones.db`)
-- [x] Banner de aviso legal en el frontend
+- [x] Logging anónimo de conversaciones en SQLite (`data/logs/conversaciones.db`) — 22 columnas
+- [x] Banner de aviso legal prominente en el frontend
 - [x] Citas de fuente con documento y página al pie de cada respuesta
 - [x] Nombres de documentos legibles en citas de fuente
 - [x] Fórmula de similitud coseno unificada: (2-dist)/2*100
 - [x] Normalizador de texto plano: `src/normalizador.py`
 - [x] HyDE eliminado — flujo simplificado con embedding directo de la pregunta
+- [x] Recuperación balanceada por comunidad autónoma — evita sesgo del corpus desbalanceado
 
 ### Pendiente
-- [ ] **Reconstruir base de datos vectorial** con los nuevos PDFs (andalucia, castillalamancha, castillayleon) — borrar `data/vectordb/` y re-ejecutar `pipeline.py`
-- [ ] Sección de administración para subir nuevos PDFs desde la web (sin usar terminal)
-- [ ] Interfaces más gráficas: mejorar visualizaciones, dashboards y UX general
+- [ ] Ampliar corpus de Madrid (87 chunks actuales vs 890 de Andalucía)
 - [ ] Modalidad de audio con transcripción — poder hablar al chat (Web Speech API o Whisper)
 - [ ] Bloque B completo: detección de fraude en licitaciones con Isolation Forest
 
@@ -309,6 +367,15 @@ La base de datos solo cubre las CCAA cuyos PDFs están en `data/raw/`. Preguntas
 
 ### Páginas escaneadas
 Páginas 48-50 del PDF de Madrid son imágenes. pdfplumber no extrae texto. Requeriría OCR (pytesseract) — no implementado.
+
+### Pipeline re-narrativiza todo cuando la vectordb está vacía
+Si se borra `data/vectordb/` pero se conserva `data/processed/datos_extraidos.json`, el pipeline re-usa los datos extraídos pero re-narrativiza todas las tablas. No guarda estado entre la fase de narrativización y la de vectorización, lo que genera coste API innecesario en reconstrucciones.
+
+### Chunks de tablas sin límite de tamaño
+Tablas muy grandes (PDFs con más de ~800 páginas) pueden producir chunks que superan el límite de 8192 tokens del modelo `text-embedding-3-small`. El pipeline no trunca ni fragmenta chunks de tabla.
+
+### Corpus desbalanceado — sesgo en comparativas
+Andalucía tiene 890 chunks vs 87 de Madrid. En preguntas comparativas el retriever tiende a devolver más chunks de Andalucía, sesgando la respuesta. La solución es ampliar el corpus de Madrid o implementar recuperación por comunidad explícita.
 
 ### Lo que funciona bien
 - Preguntas directas con dato concreto ("cuánto a Sanidad")
@@ -360,7 +427,7 @@ Isolation Forest (`sklearn.ensemble`) — no supervisado, no requiere datos etiq
 | Solapamiento | 50 tokens (10%) | Evita partir frases clave entre chunks |
 | Reducción dimensional | PCA (sklearn) | UMAP incompatible con Python 3.11 — ver decisiones técnicas |
 | Python | 3.11 | 3.14 incompatible con ChromaDB y FastAPI — ver decisiones técnicas |
-| Frontend | React + Vite | Más flexible que Streamlit para la interfaz dual ciudadano/técnico |
+| Frontend | Standalone HTML (React CDN + Babel) | Sin build step en dev, desplegable sin Node en servidor; Vite solo para proxy en local |
 | HyDE | Eliminado — embed directo de la pregunta | Los nuevos PDFs son narrativos; mismatch de vocabulario ya no existe |
 | Logging SQLite | `data/logs/conversaciones.db` excluido de git | Datos de servidor y local son distintos; fichero binario mutable |
 | Similitud coseno | (2-distancia)/2*100 | ChromaDB devuelve distancias 0-2, no 0-1. Esta fórmula da porcentaje real |
@@ -387,9 +454,9 @@ ssh root@46.224.81.240
   ↓
 cd contratos_licitaciones && git pull
   ↓
-(si hay cambios en frontend) cd frontend && npm run build
+cd frontend && npm run build    ← siempre — genera frontend/dist/
   ↓
-(si hay cambios en backend) pkill uvicorn && bash start_api.sh &
+systemctl restart fastapi       ← siempre — recarga api/server.py
 ```
 
 ---
@@ -422,8 +489,8 @@ cd contratos_licitaciones && git pull
    apt install nginx -y
    ```
    Configuración en `/etc/nginx/sites-available/presupuestos`:
-   - `location /` → sirve `frontend/dist/` (archivos estáticos)
-   - `location /api/` → proxy a `localhost:8000` (FastAPI)
+   - `location /` → sirve `frontend/dist/` (archivos estáticos compilados con `npm run build`)
+   - `location /api/` → proxy a `localhost:8000/api/` (FastAPI, que ya tiene el prefijo `/api/`)
 
 6. FastAPI como servicio systemd:
    - Archivo: `/etc/systemd/system/fastapi.service`
@@ -433,9 +500,8 @@ cd contratos_licitaciones && git pull
 
 ### Estado actual del servidor
 - **FastAPI**: activo como servicio systemd, arranca automáticamente al reiniciar
-- **Nginx**: activo, sirve en puerto 80
+- **Nginx**: activo, sirve en puerto 80; config activa en `/etc/nginx/sites-enabled/presupuestos`; sirve `frontend/dist/`
 - **URL pública**: http://46.224.81.240
-- **API_BASE**: corregido a rutas relativas (`/api/`) en `ChatPanel.jsx` y `VectorMap.jsx` — ya recompilado y desplegado.
 
 ### Comandos útiles en el servidor
 ```bash
@@ -459,34 +525,44 @@ systemctl status fastapi && systemctl status nginx
 
 ## PROBLEMAS RESUELTOS — HISTORIAL
 
+**2026-04-29 — Recuperación balanceada por comunidad**
+
+Implementada `busqueda_balanceada()` en `api/server.py`. Resuelve el sesgo del corpus desbalanceado en preguntas comparativas. Ver detalles en Decisiones técnicas → Recuperación balanceada por comunidad.
+
+---
+
 **2026-04-26 — Eliminación de HyDE y simplificación del pipeline**
 
-- **HyDE eliminado** (`api/server.py` + `pipeline.py`): HyDE (Hypothetical Document Embedding) fue implementado para reducir el mismatch entre el vocabulario natural del usuario y el técnico de los PDFs. Con el cambio a documentos narrativos de las CCAA, ese mismatch desapareció. Se eliminó la generación del fragmento hipotético, la carga de ejemplos de vocabulario (`cargar_ejemplos_hyde()`), la extracción de ejemplos en pipeline (`extraer_ejemplos_hyde()`), y el fichero `data/processed/ejemplos_hyde.json`. El endpoint `/chat` ahora embebe la pregunta directamente. El campo `hipotesis_hyde` en SQLite se conserva en el schema (para no romper logs históricos) pero se registra como `null`.
-- **Nuevos documentos narrativos**: sustituido `ResumenEjecutivo2026.pdf` por tres PDFs narrativos de comunidades autónomas (`andalucia.pdf`, `castillalamancha.pdf`, `castillayleon.pdf`). Actualizado `NOMBRES_DOCUMENTOS` en `api/server.py`.
-- **n_results vuelve a 6**: se había subido a 12 temporalmente para mejorar cobertura comparativa con HyDE. Al simplificar el flujo se vuelve a 6 (equilibrio cobertura/tamaño de contexto).
+- **HyDE eliminado**: con el cambio a documentos narrativos de las CCAA, el mismatch de vocabulario desapareció. Se eliminó la generación del fragmento hipotético y el fichero `data/processed/ejemplos_hyde.json`. El endpoint `/chat` ahora embebe la pregunta directamente. El campo `hipotesis_hyde` en SQLite se conserva (compatibilidad con logs históricos) pero se registra como `null`. Ver detalles en Decisiones técnicas → HyDE.
+- **Corpus actualizado**: sustituidos documentos anteriores por PDFs narrativos de CCAA. Corpus actual: `andalucia.pdf`, `castillayleon.pdf`, `presupuestos_generales_2026.pdf`, `resumen_ingresos_y_gastos.pdf`.
+- **n_results = 6**: valor restaurado tras haberse subido temporalmente a 12 durante las pruebas con HyDE.
 
 ---
 
 **2026-04-20 — Nombres legibles, similitud coseno corregida y normalizador de texto**
 
-- **Nombres de documento legibles** (`api/server.py`): añadido diccionario `NOMBRES_DOCUMENTOS` que mapea el nombre del fichero PDF al nombre legible. El campo `fuentes[].documento` en la respuesta JSON y en SQLite ahora muestra p.ej. "Presupuestos Generales Madrid 2026" en lugar de "presupuestos_generales_2026.pdf". Fallback: nombre del fichero sin extensión.
-- **Fórmula de similitud unificada** (`api/server.py` + `TechPanel.jsx`): ChromaDB coseno devuelve distancias 0-2, no 0-1. Corregida la fórmula de `1 - distance` a `(2 - distance) / 2 * 100` en `ScoreBar` de TechPanel. En el backend, `score_medio` se guarda ahora como porcentaje real (0-100) y se añade `score_similitud_media` al JSON de respuesta.
-- **Normalizador de texto plano** (`src/normalizador.py` + `pipeline.py`): nuevo módulo con función `normalizar_texto()` que elimina guiones de fin de línea, colapsa espacios, elimina puntos suspensivos, quita líneas de número de página y cabeceras repetitivas, y une líneas que no terminan en puntuación. Aplicado en `pipeline.py` sobre chunks de tipo "texto" tras el chunking.
+- **Nombres de documento legibles** (`api/server.py`): diccionario `NOMBRES_DOCUMENTOS` mapea filename → nombre legible. Fallback: nombre sin extensión.
+- **Fórmula de similitud unificada** (`api/server.py`): ChromaDB coseno devuelve distancias 0-2, no 0-1. Corregido de `1 - distance` a `(2 - distance) / 2 * 100`. Ver Decisiones técnicas → Similitud coseno.
+- **Normalizador de texto plano** (`src/normalizador.py` + `pipeline.py`): `normalizar_texto()` elimina artefactos PDF (guiones de fin de línea, cabeceras repetitivas, líneas de número de página). Aplicado sobre chunks de tipo "texto" tras el chunking.
 
-**2026-04-20 — Logging, HyDE, banner legal y citas de fuente**
+---
 
-Implementados simultáneamente en una sesión:
-- **HyDE** (`api/server.py`): antes de embeddar la pregunta se genera un fragmento hipotético de documento oficial con GPT-4o-mini (max_tokens=200, prompt estilo administrativo), y ese fragmento es el que se embeda. El resto del pipeline RAG es idéntico. *(Nota: eliminado el 2026-04-26 — ver entrada superior)*
-- **Logging SQLite** (`api/server.py` + `data/logs/`): cada conversación se registra en `data/logs/conversaciones.db` con sesion_id anónimo (UUID), timestamp, pregunta, hipótesis HyDE, respuesta, score medio de similitud, núm. de chunks y fuentes JSON. La DB está excluida de git.
-- **sesion_id anónimo** (`ChatPanel.jsx`): se genera un UUID con `crypto.randomUUID()` al montar el componente (lazy initializer de useState) y se incluye en cada POST /chat. No se persiste en storage.
-- **Banner aviso legal** (`ChatPanel.jsx`): banner amarillo tenue al tope del panel de chat, con dos líneas de texto legal y botón ✕ para cerrar. Estado local, no persistido.
-- **Citas de fuente** (`api/server.py` + `ChatPanel.jsx`): el backend deduplica chunks por documento y devuelve `fuentes: [{documento, paginas: [...]}]`. El frontend añade `fuentes` al objeto mensaje del asistente y lo renderiza al pie de cada burbuja con formato "📄 documento, p. X, Y".
+**2026-04-20 — Logging SQLite, sesion_id anónimo, banner legal y citas de fuente**
+
+- **Logging SQLite** (`api/server.py`): cada conversación se registra en `data/logs/conversaciones.db` con sesion_id UUID, timestamp, pregunta, respuesta, score, chunks y fuentes. Excluida de git.
+- **sesion_id anónimo** (`frontend/index.html`): UUID generado con `crypto.randomUUID()` al inicio de la sesión, incluido en cada POST /chat. No persiste en storage.
+- **Banner aviso legal** (`frontend/index.html`): modal prominente con texto legal completo, no desaparece hasta click explícito.
+- **Citas de fuente** (`api/server.py`): el backend deduplica chunks por documento y devuelve `fuentes: [{documento, paginas: [...]}]`. El frontend lo renderiza al pie de cada respuesta.
+
+---
+
+## ERRORES CONOCIDOS Y SOLUCIONES
 
 | Error | Causa | Solución |
 |-------|-------|---------|
 | `ModuleNotFoundError: pkg_resources` al importar umap-learn | umap-learn 0.5.x depende de setuptools antiguo, eliminado en Python 3.11 | Reemplazar UMAP por PCA de scikit-learn en `api/server.py` |
 | ChromaDB y FastAPI fallan con Python 3.14.3 | 3.14 aún en desarrollo, dependencias nativas sin soporte | Recrear venv con `/opt/homebrew/bin/python3.11` |
-| `react-plotly.js` da error de bundling con Vite | `createPlotlyComponent()` accede al DOM en tiempo de import | Importar `plotly.js/dist/plotly.min.js` directamente y usar `Plotly.newPlot()` en `useEffect()` |
+| `react-plotly.js` da error de bundling con Vite | `createPlotlyComponent()` accede al DOM en tiempo de import | Usar `window.Plotly.newPlot()` directamente en `useEffect()` (Plotly cargado via CDN) |
 | `python`/`python3` en terminal no encuentra librerías del proyecto | Claude Code o macOS apunta al Python global de Homebrew | Usar siempre `venv/bin/python` y `venv/bin/pip` de forma explícita |
 | Frontend en puerto distinto al esperado | Si 5173 está ocupado, Vite auto-incrementa a 5174 | Normal — el puerto configurado es 5173, usar el que muestre Vite al arrancar |
 
@@ -494,8 +570,6 @@ Implementados simultáneamente en una sesión:
 
 ## PRÓXIMOS PASOS IDENTIFICADOS
 
-1. **Reconstruir base de datos vectorial**: borrar `data/vectordb/` y re-ejecutar `pipeline.py` con los nuevos PDFs (andalucia, castillalamancha, castillayleon)
-2. Sección administración: formulario web para subir PDFs sin usar terminal
-3. Interfaces más gráficas: mejorar visualizaciones, dashboards y UX general
-4. Modalidad de audio con transcripción: poder hablar al chat (Web Speech API o Whisper)
-5. *(Aspiracional — fuera de sprint)* Bloque B: detección de fraude en licitaciones con Isolation Forest
+1. Ampliar corpus de Madrid: indexar más PDFs de la Comunidad de Madrid para equilibrar los 890 chunks de Andalucía
+2. Modalidad de audio con transcripción: poder hablar al chat (Web Speech API o Whisper)
+3. *(Aspiracional — fuera de sprint)* Bloque B: detección de fraude en licitaciones con Isolation Forest

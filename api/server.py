@@ -56,6 +56,26 @@ TEMAS_KEYWORDS = {
     "Impuestos": ["impuesto","tributo","fiscal","irpf","iva","tasas"],
 }
 
+COMUNIDADES_FUENTES = {
+    "andalucia": ["andalucia.pdf"],
+    "madrid": ["presupuestos_generales_2026.pdf", "resumen_ingresos_y_gastos.pdf"],
+    "castillayleon": ["castillayleon.pdf"],
+    "castilla y leon": ["castillayleon.pdf"],
+}
+
+KEYWORDS_COMUNIDADES = {
+    "andalucia": ["andalucía", "andalucia", "sevilla", "málaga", "granada"],
+    "madrid": ["madrid", "comunidad de madrid"],
+    "castillayleon": ["castilla y león", "castilla y leon", "castillayleon",
+                      "valladolid", "burgos", "salamanca", "león"],
+}
+
+KEYWORDS_COMPARATIVA = [
+    "compara", "comparar", "diferencia", "más que", "menos que",
+    "mayor que", "menor que", "versus", "vs", "entre", "todas",
+    "cada comunidad", "qué comunidad", "cuál comunidad",
+]
+
 
 def detectar_tema(pregunta: str) -> str:
     p = pregunta.lower()
@@ -63,6 +83,95 @@ def detectar_tema(pregunta: str) -> str:
         if any(k in p for k in kws):
             return tema
     return "General"
+
+
+def detectar_comunidades(pregunta: str) -> list:
+    p = pregunta.lower()
+    detectadas = []
+    for clave, keywords in KEYWORDS_COMUNIDADES.items():
+        if any(kw in p for kw in keywords):
+            if clave not in detectadas:
+                detectadas.append(clave)
+    return detectadas
+
+
+def es_comparativa(pregunta: str) -> bool:
+    p = pregunta.lower()
+    return any(kw in p for kw in KEYWORDS_COMPARATIVA)
+
+
+def _procesar_resultados(resultados: dict) -> list:
+    chunks = []
+    docs = resultados["documents"][0] if resultados["documents"] else []
+    for i in range(len(docs)):
+        meta = resultados["metadatas"][0][i] if resultados["metadatas"] else {}
+        chunks.append({
+            "texto": docs[i],
+            "fuente": meta.get("fuente", ""),
+            "pagina": meta.get("pagina", 0),
+            "distancia": resultados["distances"][0][i],
+        })
+    return chunks
+
+
+def busqueda_balanceada(vector_pregunta: list, comunidades: list, comparativa: bool) -> tuple:
+    if not comunidades and not comparativa:
+        resultados = coleccion.query(
+            query_embeddings=[vector_pregunta], n_results=6,
+            include=["documents", "metadatas", "distances"]
+        )
+        return _procesar_resultados(resultados), "global"
+
+    if len(comunidades) == 1 and not comparativa:
+        fuentes = COMUNIDADES_FUENTES.get(comunidades[0], [])
+        where_filter = {"fuente": {"$in": [f"data/raw/{f}" for f in fuentes]}}
+        try:
+            resultados = coleccion.query(
+                query_embeddings=[vector_pregunta], n_results=6,
+                where=where_filter, include=["documents", "metadatas", "distances"]
+            )
+            chunks = _procesar_resultados(resultados)
+            if chunks:
+                return chunks, f"filtrado_{comunidades[0]}"
+        except Exception:
+            pass
+        resultados = coleccion.query(
+            query_embeddings=[vector_pregunta], n_results=6,
+            include=["documents", "metadatas", "distances"]
+        )
+        return _procesar_resultados(resultados), "global_fallback"
+
+    chunks_por_comunidad = []
+    if comunidades:
+        n_por_comunidad = max(2, 6 // len(comunidades))
+        comunidades_a_consultar = comunidades
+    else:
+        n_por_comunidad = 2
+        comunidades_a_consultar = list(dict.fromkeys(COMUNIDADES_FUENTES.keys()))
+
+    for comunidad in comunidades_a_consultar:
+        fuentes = COMUNIDADES_FUENTES.get(comunidad, [])
+        if not fuentes:
+            continue
+        where_filter = {"fuente": {"$in": [f"data/raw/{f}" for f in fuentes]}}
+        try:
+            resultados = coleccion.query(
+                query_embeddings=[vector_pregunta], n_results=n_por_comunidad,
+                where=where_filter, include=["documents", "metadatas", "distances"]
+            )
+            chunks_por_comunidad.extend(_procesar_resultados(resultados))
+        except Exception:
+            continue
+
+    if not chunks_por_comunidad:
+        resultados = coleccion.query(
+            query_embeddings=[vector_pregunta], n_results=6,
+            include=["documents", "metadatas", "distances"]
+        )
+        return _procesar_resultados(resultados), "global_fallback"
+
+    chunks_por_comunidad.sort(key=lambda x: x["distancia"])
+    return chunks_por_comunidad, f"balanceado_{len(comunidades_a_consultar)}comunidades"
 
 
 def init_db():
@@ -88,6 +197,7 @@ def init_db():
         ("tema_detectado","TEXT"), ("pregunta_respondida","INTEGER"),
         ("longitud_respuesta","INTEGER"), ("session_turno","INTEGER"),
         ("feedback_tipo","TEXT"), ("feedback_comentario","TEXT"),
+        ("estrategia_busqueda","TEXT"),
     ]:
         try:
             conn.execute(f"ALTER TABLE conversaciones ADD COLUMN {col} {tipo}")
@@ -129,22 +239,13 @@ def chat(req: ChatRequest):
     )
     vector_pregunta = embed_resp.data[0].embedding
 
-    resultados = coleccion.query(
-        query_embeddings=[vector_pregunta],
-        n_results=6,
-        include=["documents","metadatas","distances"]
-    )
+    comunidades = detectar_comunidades(req.pregunta)
+    comparativa = es_comparativa(req.pregunta)
+    chunks, estrategia = busqueda_balanceada(vector_pregunta, comunidades, comparativa)
 
-    chunks = []
     contexto = ""
-    for i in range(len(resultados["documents"][0])):
-        texto = resultados["documents"][0][i]
-        meta = resultados["metadatas"][0][i]
-        distancia = resultados["distances"][0][i]
-        fuente = meta.get("fuente","")
-        pagina = meta.get("pagina",0)
-        chunks.append({"texto":texto,"fuente":fuente,"pagina":pagina,"distancia":distancia})
-        contexto += f"[Pagina {pagina} | {fuente}] {texto}\n\n"
+    for chunk in chunks:
+        contexto += f"[Pagina {chunk['pagina']} | {chunk['fuente']}] {chunk['texto']}\n\n"
 
     prompt = f"""Eres un asistente de transparencia publica que ayuda a los ciudadanos a entender los presupuestos de las comunidades autonomas de España 2026.
 
@@ -202,14 +303,16 @@ RESPUESTA:"""
             score_medio,num_chunks,fuentes,
             latencia_ms,tokens_prompt,tokens_respuesta,coste_estimado_eur,
             evaluacion_agente,score_evaluacion,tema_detectado,
-            pregunta_respondida,longitud_respuesta,session_turno
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            pregunta_respondida,longitud_respuesta,session_turno,
+            estrategia_busqueda
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         sid, datetime.utcnow().isoformat(), req.pregunta, None, respuesta,
         score_medio, len(chunks), json.dumps(fuentes_log, ensure_ascii=False),
         latencia_ms, tokens_p, tokens_r, coste_eur,
         evaluacion, score_medio, tema,
-        pregunta_respondida, longitud, session_turno
+        pregunta_respondida, longitud, session_turno,
+        estrategia
     ))
     conv_id = cur.lastrowid
     conn.commit()
@@ -223,6 +326,7 @@ RESPUESTA:"""
         "fuentes": fuentes_log if fuentes_log else [],
         "score_similitud_media": score_medio,
         "latencia_ms": latencia_ms,
+        "estrategia_busqueda": estrategia,
     }
 
 

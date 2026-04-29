@@ -309,10 +309,50 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 .alert-item:last-child{margin-bottom:0}
 
 /* Legal banner */
-.legal-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;border-radius:var(--radius);padding:14px 22px;display:flex;align-items:center;gap:14px;max-width:700px;width:calc(100% - 48px);animation:bannerIn .6s .8s cubic-bezier(.22,1,.36,1) both;background:rgba(255,255,255,.72);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.8);box-shadow:0 16px 48px rgba(0,0,0,.1)}
+.legal-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;border-radius:var(--radius);padding:32px 36px;display:flex;flex-direction:column;align-items:center;gap:16px;min-width:500px;max-width:700px;width:calc(100% - 48px);text-align:center;animation:bannerIn .6s .8s cubic-bezier(.22,1,.36,1) both;background:rgba(255,255,255,.85);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px) saturate(1.8);border:1px solid rgba(255,255,255,.9);box-shadow:0 24px 80px rgba(0,0,0,.18),0 4px 16px rgba(0,0,0,.08)}
 @keyframes bannerIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.banner-btn{padding:8px 18px;border-radius:99px;background:var(--amber);color:#fff;border:none;cursor:none;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;transition:all .2s;box-shadow:0 2px 10px rgba(245,158,11,.35);white-space:nowrap;flex-shrink:0}
-.banner-btn:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(245,158,11,.5)}
+.banner-btn{padding:14px 24px;border-radius:12px;background:var(--amber);color:#fff;border:none;cursor:none;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;transition:all .2s;box-shadow:0 4px 16px rgba(245,158,11,.45);width:100%}
+.banner-btn:hover{transform:scale(1.02);box-shadow:0 6px 24px rgba(245,158,11,.55)}
+/* Suggestion pills in chat */
+.sugg-pill-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 16px 0}
+.sugg-pill-sm{background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:10px;padding:7px 11px;font-size:.74rem;color:var(--text-secondary);font-family:'DM Sans',sans-serif;cursor:none;transition:all .2s;line-height:1.35;text-align:left}
+.sugg-pill-sm:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--text-primary)}
+/* Tooltip wrapper */
+.tooltip-wrap{position:relative;display:inline-block}
+.tooltip-wrap .tooltip-text{position:absolute;bottom:calc(100%+8px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.72rem;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.08);box-shadow:0 4px 16px rgba(0,0,0,.1);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;color:var(--text-secondary)}
+.tooltip-wrap:hover .tooltip-text{opacity:1}
+/* Pipeline redesign */
+.pipeline-two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.pipe-card{border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:0}
+.pipe-card-header{margin-bottom:20px}
+.pipe-card-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;margin-bottom:4px}
+.pipe-card-sub{font-size:.75rem;color:var(--text-muted)}
+.pipe-nodes{display:flex;flex-direction:column;gap:0;flex:1}
+.pipe-node{display:flex;align-items:flex-start;gap:12px;opacity:0;transform:scale(0);transition:opacity .25s,transform .25s cubic-bezier(.34,1.56,.64,1)}
+.pipe-node.revealed{opacity:1;transform:scale(1)}
+.pipe-node-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid transparent}
+.pipe-node-content{flex:1;padding-bottom:16px}
+.pipe-node-title{font-size:.82rem;font-weight:600;margin-bottom:2px}
+.pipe-node-detail{font-size:.72rem;color:var(--text-muted);line-height:1.45}
+.pipe-connector{width:2px;height:16px;margin-left:15px;border-radius:1px;opacity:0;transition:opacity .3s}
+.pipe-connector.revealed{opacity:1}
+.pipe-note{font-size:.72rem;color:var(--text-muted);padding:10px 12px;border-radius:8px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);line-height:1.5;margin-top:12px}
+.pipe-replay-btn{margin-top:12px;padding:7px 16px;border-radius:99px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);font-size:.75rem;font-family:'DM Sans',sans-serif;cursor:none;transition:all .2s;align-self:center;color:var(--text-secondary)}
+.pipe-replay-btn:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--text-primary)}
+/* Insights redesign */
+.ins-total{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:600;text-align:center;margin-bottom:8px}
+.ins-total-sub{font-size:.82rem;color:var(--text-muted);text-align:center;margin-bottom:28px}
+.ins-cat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px}
+.ins-cat-card{border-radius:14px;padding:14px 10px;text-align:center;cursor:none;transition:all .2s;border:2px solid transparent}
+.ins-cat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.ins-cat-card.active{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.ins-cat-icon{font-size:20px;margin-bottom:6px}
+.ins-cat-count{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:600;margin-bottom:2px}
+.ins-cat-label{font-size:.65rem;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+/* Expand row in eval table */
+.eval-expand-row td{background:rgba(255,255,255,.5);padding:12px 16px;font-size:.78rem;color:var(--text-secondary);line-height:1.6}
+/* Striped comp table */
+.comp-table-striped tr:nth-child(even) td{background:rgba(0,0,0,.025)}
 </style>
 </head>
 <body>
@@ -338,9 +378,9 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
     </h1>
     <p class="hp-sub" id="hpSub">Transparencia presupuestaria mediante inteligencia artificial</p>
     <div class="hp-pills" id="hpPills">
-      <div class="hp-pill">💡 RAG<span class="hp-tooltip">Retrieval-Augmented Generation: el motor de búsqueda semántica</span></div>
-      <div class="hp-pill">🗄️ ChromaDB<span class="hp-tooltip">Base de datos vectorial con embeddings indexados</span></div>
-      <div class="hp-pill">🧠 GPT-4o-mini<span class="hp-tooltip">Modelo de lenguaje que genera respuestas en lenguaje natural</span></div>
+      <div class="hp-pill">💡 RAG<span class="hp-tooltip">Retrieval-Augmented Generation: motor de búsqueda semántica</span></div>
+      <div class="hp-pill" id="pillChromaDB">🗄️ ChromaDB<span class="hp-tooltip" id="tooltipChromaDB">Base de datos vectorial con embeddings indexados</span></div>
+      <div class="hp-pill">🧠 GPT-4o-mini / GPT-4o<span class="hp-tooltip">GPT-4o-mini para respuestas · GPT-4o para narrativización de tablas</span></div>
     </div>
     <button class="hp-cta" id="hpCta">Explorar la plataforma →</button>
   </div>
@@ -415,19 +455,78 @@ document.getElementById('hpCta').addEventListener('click',enterApp);
 document.getElementById('hpScrollHint').addEventListener('click',enterApp);
 window.addEventListener('wheel',function h(e){if(!document.getElementById('homepage').classList.contains('exit')){enterApp();window.removeEventListener('wheel',h);}});
 window.addEventListener('load',()=>setTimeout(runHpSequence,100));
+fetch('/api/health').then(r=>r.json()).then(d=>{
+  const el=document.getElementById('tooltipChromaDB');
+  if(el&&d.vectores)el.textContent=`Base de datos vectorial con ${d.vectores.toLocaleString()} embeddings indexados`;
+}).catch(()=>{});
 </script>
 
 <script type="text/babel">
 const { useState, useRef, useEffect, useCallback } = React;
 
-const APPROVED = ['Andalucía','Madrid','Castilla y León','Castilla-La Mancha'];
-const PENDING = ['Cataluña','País Vasco','Galicia','Extremadura','Aragón','Asturias','Cantabria','Navarra','La Rioja','Murcia','Baleares','Canarias','Valencia','Ceuta','Melilla'];
-const SUGGESTIONS = [
-  '¿Cuánto destina Andalucía a educación en 2026?',
-  '¿Cuál es el presupuesto total de Castilla y León?',
-  '¿Qué comunidad tiene mayor gasto sanitario?',
-  '¿Cómo se distribuye el gasto en Castilla-La Mancha?',
+const APPROVED = ['Andalucía','Madrid','Castilla y León','Castilla-La Mancha','Extremadura','La Rioja','Murcia'];
+const PRORROGADO = ['Cataluña','País Vasco','Galicia','Aragón','Asturias','Cantabria','Navarra','Baleares','Canarias','Comunidad Valenciana','Ceuta','Melilla'];
+
+const INITIAL_PILLS = [
+  '¿Cuánto destina Andalucía a Sanidad en 2026?',
+  '¿Cuál es el gasto total de Castilla y León?',
+  'Compara el presupuesto en educación de Madrid y Andalucía',
+  '¿Qué comunidad invierte más en infraestructuras?',
 ];
+const PILL_SETS = {
+  sanidad:[
+    '¿Cuánto gasta Andalucía en sanidad?',
+    '¿Cuál es el presupuesto sanitario de Madrid?',
+    '¿Qué destina Castilla y León a salud?',
+    'Compara el gasto sanitario entre las 3 comunidades',
+  ],
+  educacion:[
+    '¿Cuánto invierte Andalucía en educación?',
+    '¿Cuál es el presupuesto educativo de Madrid?',
+    '¿Qué destina Castilla y León a educación?',
+    'Compara educación entre Andalucía y Madrid',
+  ],
+  infraestructura:[
+    '¿Qué infraestructuras financia Andalucía?',
+    '¿En qué infraestructuras invierte Madrid?',
+    '¿Cuánto destina Castilla y León a obras?',
+    'Compara inversión en infraestructuras',
+  ],
+  madrid:[
+    '¿Cuál es el presupuesto total de Madrid en 2026?',
+    '¿Cuánto gasta Madrid en sanidad?',
+    '¿En qué partidas se concentra el gasto madrileño?',
+    '¿Cuánto destina Madrid a educación?',
+  ],
+  andalucia:[
+    '¿Cuál es el presupuesto total de Andalucía?',
+    '¿Cuánto gasta Andalucía en infraestructuras?',
+    '¿Cuáles son las partidas más grandes de Andalucía?',
+    '¿Cómo se distribuye el gasto en Andalucía?',
+  ],
+  castillayleon:[
+    '¿Cuál es el presupuesto de Castilla y León?',
+    '¿Cuánto destina CyL a sanidad?',
+    '¿Qué porcentaje va a educación en CyL?',
+    '¿Cómo se distribuye el gasto en Castilla y León?',
+  ],
+  default:[
+    '¿Cuánto destina Andalucía a Sanidad en 2026?',
+    '¿Cuál es el gasto total de Castilla y León?',
+    'Compara el presupuesto en educación de Madrid y Andalucía',
+    '¿Qué comunidad invierte más en infraestructuras?',
+  ],
+};
+function detectPillTopic(text) {
+  const t = (text||'').toLowerCase();
+  if (t.includes('sanidad')||t.includes('salud')||t.includes('hospital')) return 'sanidad';
+  if (t.includes('educaci')||t.includes('escuela')||t.includes('universidad')) return 'educacion';
+  if (t.includes('infraestruc')||t.includes('obra')||t.includes('transporte')||t.includes('carretera')) return 'infraestructura';
+  if (t.includes('madrid')) return 'madrid';
+  if (t.includes('andaluc')) return 'andalucia';
+  if (t.includes('castilla y le')||t.includes('castillayleon')||t.includes('cyl')) return 'castillayleon';
+  return 'default';
+}
 
 function Spinner() {
   return <div style={{width:20,height:20,border:'2px solid rgba(0,0,0,.1)',borderTopColor:'var(--amber)',borderRadius:'50%',animation:'spin 0.7s linear infinite'}}/>;
@@ -463,6 +562,7 @@ function CiudadanoSection() {
   const [messages, setMessages] = useState([{role:'assistant', text:'Hola, soy el asistente de Ecosistema de Cristal. Puedo ayudarte a consultar información sobre presupuestos públicos españoles con datos oficiales verificados. ¿Qué deseas saber?', fuentes:[], convId:null}]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [suggPills, setSuggPills] = useState(INITIAL_PILLS);
   const sesionIdRef = useRef(null);
   const msgEndRef = useRef(null);
 
@@ -484,12 +584,15 @@ function CiudadanoSection() {
       });
       const data = await resp.json();
       if (!sesionIdRef.current) sesionIdRef.current = data.sesion_id;
+      const respuesta = data.respuesta || 'Sin respuesta.';
       setMessages(m => [...m, {
         role: 'assistant',
-        text: data.respuesta || 'Sin respuesta.',
+        text: respuesta,
         fuentes: data.fuentes || [],
         convId: data.id
       }]);
+      const topic = detectPillTopic(respuesta + ' ' + pregunta);
+      setSuggPills(PILL_SETS[topic] || PILL_SETS.default);
     } catch(e) {
       setMessages(m => [...m, { role:'assistant', text:'⚠️ Error de conexión. Asegúrate de que la API está corriendo en el puerto 8000.', fuentes:[], convId:null }]);
     }
@@ -532,7 +635,12 @@ function CiudadanoSection() {
             <div ref={msgEndRef} />
           </div>
           <div className="chat-input-area">
-            <div className="chat-pill">
+            <div className="sugg-pill-grid">
+              {suggPills.map((s,i)=>(
+                <button key={i} className="sugg-pill-sm" onClick={()=>send(s)}>{s}</button>
+              ))}
+            </div>
+            <div className="chat-pill" style={{marginTop:8}}>
               <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Pregunta sobre presupuestos públicos..." />
               <button className="send-btn" onClick={()=>send()}><SendIcon/></button>
             </div>
@@ -540,19 +648,19 @@ function CiudadanoSection() {
         </div>
         <div className="sidebar">
           <div className="sidebar-card glass">
-            <h3>📊 Presupuestos 2026</h3>
+            <h3>📊 Estado presupuestos</h3>
             <div style={{marginBottom:12}}>
-              <div className="budget-sec-lbl ap"><span>✓</span> Indexados ({APPROVED.length})</div>
+              <div className="budget-sec-lbl ap" style={{marginBottom:6}}>
+                <span style={{background:'rgba(22,163,74,.15)',color:'#166534',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>✓ APROBADO 2026</span>
+              </div>
               <div className="region-pills">{APPROVED.map(r=><span key={r} className="rpill ap">{r}</span>)}</div>
             </div>
             <div>
-              <div className="budget-sec-lbl pr"><span>⏳</span> No disponibles ({PENDING.length})</div>
-              <div className="region-pills">{PENDING.map(r=><span key={r} className="rpill pr">{r}</span>)}</div>
+              <div className="budget-sec-lbl pr" style={{marginBottom:6}}>
+                <span style={{background:'rgba(245,158,11,.15)',color:'#92400e',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>⏳ PRORROGADO — usan el de 2025</span>
+              </div>
+              <div className="region-pills">{PRORROGADO.map(r=><span key={r} className="rpill pr">{r}</span>)}</div>
             </div>
-          </div>
-          <div className="sidebar-card glass">
-            <h3>💡 Preguntas sugeridas</h3>
-            {SUGGESTIONS.map((s,i)=><button key={i} className="sugg-pill" onClick={()=>send(s)}>{s}</button>)}
           </div>
         </div>
       </div>
@@ -578,18 +686,45 @@ const COMP_DATA = [
     )
   },
   {
-    icon:'📦', bg:'rgba(245,158,11,.08)', badge:'Dominio público', badgeStyle:{background:'rgba(245,158,11,.1)',color:'#92400e'},
+    icon:'📊', bg:'rgba(245,158,11,.08)', badge:'Auditable', badgeStyle:{background:'rgba(245,158,11,.1)',color:'#92400e'},
     title:'Datos que procesamos',
-    short:'Únicamente se procesan documentos de dominio público publicados por organismos oficiales del Estado español.',
+    short:'Registro detallado de cada consulta para auditoría y mejora del servicio. Sin datos identificables del usuario.',
     expandContent: () => (
-      <table className="comp-table">
-        <thead><tr><th>Dato</th><th>Uso</th><th>Retención</th></tr></thead>
-        <tbody>
-          {[['Pregunta del usuario','Procesamiento en tiempo real','0 días'],['Log de similitud','Métricas agregadas','90 días'],['Tiempo de respuesta','Optimización del sistema','90 días']].map(([d,u,r])=>(
-            <tr key={d}><td>{d}</td><td style={{color:'var(--text-muted)'}}>{u}</td><td><span style={{padding:'2px 8px',borderRadius:99,background:'rgba(22,163,74,.08)',color:'#166534',fontSize:'.7rem',fontWeight:600}}>{r}</span></td></tr>
-          ))}
-        </tbody>
-      </table>
+      <div>
+        <table className="comp-table comp-table-striped" style={{fontSize:'.74rem'}}>
+          <thead><tr><th>Dato</th><th>Para qué se usa</th><th>Retención</th></tr></thead>
+          <tbody>
+            {[
+              ['Texto de la pregunta','Construir el contexto RAG y generar la respuesta'],
+              ['Respuesta generada','Auditoría y control de calidad'],
+              ['Similitud media (score)','Medir relevancia de la recuperación'],
+              ['Número de chunks recuperados','Métricas de rendimiento del sistema'],
+              ['Fuentes consultadas (doc + páginas)','Trazabilidad de la información citada'],
+              ['Latencia en ms','Monitorización del rendimiento'],
+              ['Tokens enviados a OpenAI','Control de costes'],
+              ['Tokens recibidos de OpenAI','Control de costes'],
+              ['Coste estimado en €','Seguimiento económico del sistema'],
+              ['Evaluación automática','Calidad de respuestas'],
+              ['Tema detectado','Análisis de uso y tendencias'],
+              ['Turno dentro de la sesión','Análisis de conversaciones'],
+              ['Feedback del usuario (👍/👎)','Mejora del sistema'],
+              ['Comentario de feedback','Mejora cualitativa'],
+              ['ID de sesión anónimo','Agrupar turnos de una misma conversación'],
+              ['Timestamp de la consulta','Análisis temporal de uso'],
+              ['Estrategia de búsqueda','Auditoría del método de recuperación RAG usado (global / filtrado por comunidad / balanceado)'],
+            ].map(([d,u])=>(
+              <tr key={d}>
+                <td style={{fontWeight:500}}>{d}</td>
+                <td style={{color:'var(--text-muted)'}}>{u}</td>
+                <td><span style={{padding:'2px 8px',borderRadius:99,background:'rgba(22,163,74,.08)',color:'#166534',fontSize:'.68rem',fontWeight:600,whiteSpace:'nowrap'}}>Indefinida</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p style={{fontSize:'.7rem',color:'var(--text-muted)',marginTop:10,lineHeight:1.5,padding:'8px 10px',background:'rgba(0,0,0,.025)',borderRadius:8}}>
+          No se recoge ningún dato identificable del usuario. El ID de sesión es un UUID generado aleatoriamente en el navegador, sin vinculación a ninguna cuenta, IP ni dispositivo.
+        </p>
+      </div>
     )
   },
   {
@@ -685,10 +820,10 @@ function SistemaTab() {
   }, []);
 
   const cards = [
-    {val: health ? health.vectores?.toLocaleString() : '…', lbl:'Vectores indexados', dot:'dot-green'},
-    {val: metrics ? (metrics.latencia_media_ms ? metrics.latencia_media_ms+'ms' : '—') : '…', lbl:'Latencia media', dot:'dot-amber'},
-    {val: metrics ? metrics.total_consultas?.toLocaleString() : '…', lbl:'Consultas totales', dot:'dot-green'},
-    {val: metrics ? (metrics.pct_coherentes != null ? metrics.pct_coherentes+'%' : '—') : '…', lbl:'Coherencia media', dot:'dot-green'},
+    {val: health ? health.vectores?.toLocaleString() : '…', lbl:'Vectores indexados', dot:'dot-green', tooltip:null},
+    {val: metrics ? (metrics.latencia_media_ms ? metrics.latencia_media_ms+'ms' : '—') : '…', lbl:'Latencia media', dot:'dot-amber', tooltip:'Tiempo desde recepción de pregunta hasta respuesta completa de GPT-4o-mini. No incluye latencia de red.'},
+    {val: metrics ? metrics.total_consultas?.toLocaleString() : '…', lbl:'Consultas totales', dot:'dot-green', tooltip:null},
+    {val: metrics ? (metrics.pct_coherentes > 0 ? metrics.pct_coherentes+'%' : metrics.total_consultas > 0 ? 'Sin datos suficientes' : '—') : '…', lbl:'Coherencia media', dot:'dot-green', tooltip:null},
   ];
   const logs = metrics?.logs_recientes?.slice(0,5) || [];
 
@@ -697,8 +832,15 @@ function SistemaTab() {
       <div className="metrics-grid">
         {cards.map((m,i)=>(
           <div key={i} className="metric-card glass" style={{animationDelay:`${i*.08}s`}}>
-            <div className="metric-val">{m.val}</div>
-            <div className="metric-lbl">{m.lbl}</div>
+            <div className="metric-val" style={{fontSize:m.val&&m.val.length>10?'1.1rem':'1.8rem'}}>{m.val}</div>
+            <div className="metric-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+              {m.lbl}
+              {m.tooltip && (
+                <span className="tooltip-wrap" style={{fontSize:'1rem'}}>ℹ
+                  <span className="tooltip-text" style={{whiteSpace:'normal',width:220,textAlign:'left'}}>{m.tooltip}</span>
+                </span>
+              )}
+            </div>
             <div className={`metric-dot ${m.dot}`}/>
           </div>
         ))}
@@ -799,24 +941,25 @@ function DocumentosTab() {
   return (
     <div style={{animation:'secIn .4s ease both'}}>
       {toast && <div className="toast">✅ Documento subido correctamente</div>}
-      <div className="docs-list">
-        {docs.map((doc,i)=>(
-          <div key={i} className="doc-item glass" style={{animationDelay:`${i*.06}s`}}>
-            <div className="doc-icon">📄</div>
-            <div className="doc-info">
-              <div className="doc-name">{doc.nombre || doc.filename}</div>
-              <div className="doc-meta">{doc.filename} · {doc.size_mb} MB</div>
-            </div>
-            <div style={{textAlign:'right',flexShrink:0}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:14,marginBottom:4}}>
+        {docs.map((doc,i)=>{
+          const fn=(doc.filename||'').toLowerCase();
+          const color=fn.includes('andaluc')?'#22c55e':fn.includes('castillayleon')||fn.includes('castilla')?'#F59E0B':fn.includes('resumen')?'#9a9590':'#007AFF';
+          const comunidad=fn.includes('andaluc')?'Andalucía':fn.includes('castillayleon')||fn.includes('castilla')?'Castilla y León':fn.includes('resumen')?'Resumen Madrid':'Madrid';
+          return (
+            <div key={i} className="glass" style={{borderRadius:'var(--radius)',padding:20,display:'flex',flexDirection:'column',alignItems:'center',gap:8,textAlign:'center',animationDelay:`${i*.06}s`,animation:'docIn .4s cubic-bezier(.22,1,.36,1) both'}}>
+              <div style={{width:52,height:52,borderRadius:14,background:`${color}22`,border:`2px solid ${color}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>📄</div>
+              <div style={{fontWeight:600,fontSize:'.9rem'}}>{comunidad}</div>
+              {doc.chunks>0 && <div style={{fontSize:'.74rem',color:'var(--text-muted)'}}>{doc.chunks.toLocaleString()} chunks</div>}
+              <div style={{fontSize:'.78rem',color:'var(--text-muted)'}}>{doc.size_mb} MB</div>
               {doc.indexado
-                ? <div className="doc-badge">{doc.chunks?.toLocaleString()} chunks</div>
-                : <div style={{padding:'3px 10px',borderRadius:99,fontSize:'.68rem',fontWeight:600,background:'rgba(245,158,11,.1)',color:'#92400e'}}>Sin indexar</div>
+                ? <span style={{padding:'3px 10px',borderRadius:99,background:'rgba(22,163,74,.1)',color:'#166534',fontSize:'.68rem',fontWeight:700}}>✓ Indexado</span>
+                : <span style={{padding:'3px 10px',borderRadius:99,background:'rgba(245,158,11,.1)',color:'#92400e',fontSize:'.68rem',fontWeight:700}}>Sin indexar</span>
               }
-              <div style={{fontSize:'.72rem',color:'var(--text-muted)',marginTop:4}}>{doc.size_mb} MB</div>
             </div>
-          </div>
-        ))}
-        {docs.length === 0 && <div style={{fontSize:'.82rem',color:'var(--text-muted)',padding:16,textAlign:'center'}}>Cargando documentos...</div>}
+          );
+        })}
+        {docs.length === 0 && <div style={{fontSize:'.82rem',color:'var(--text-muted)',padding:16,gridColumn:'1/-1',textAlign:'center'}}>Cargando documentos...</div>}
       </div>
       <div
         className={`upload-zone ${dragover?'dragover':''}`}
@@ -920,44 +1063,120 @@ function VectoresTab() {
   );
 }
 
+function PipelineAnimCard({color, title, subtitle, nodes, note, connColor}) {
+  const [revealed, setRevealed] = useState([]);
+  const [playing, setPlaying] = useState(false);
+  const timerRef = useRef([]);
+
+  const play = () => {
+    if (playing) return;
+    setPlaying(true);
+    setRevealed([]);
+    timerRef.current.forEach(t=>clearTimeout(t));
+    timerRef.current = nodes.map((_,i)=>setTimeout(()=>setRevealed(r=>[...r,i]),i*200));
+    setTimeout(()=>setPlaying(false), nodes.length*200+400);
+  };
+
+  useEffect(()=>{
+    const t = setTimeout(play, 300);
+    return ()=>clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="pipe-card glass" style={{borderTop:`3px solid ${color}`}}>
+      <div className="pipe-card-header">
+        <div className="pipe-card-title" style={{color}}>{title}</div>
+        <div className="pipe-card-sub">{subtitle}</div>
+      </div>
+      <div className="pipe-nodes">
+        {nodes.map((n,i)=>(
+          <React.Fragment key={i}>
+            <div className={`pipe-node ${revealed.includes(i)?'revealed':''}`}>
+              <div className="pipe-node-dot" style={{background:`${color}22`,border:`2px solid ${color}66`}}>
+                <span style={{fontSize:13}}>{n.icon}</span>
+              </div>
+              <div className="pipe-node-content">
+                <div className="pipe-node-title">{n.title}</div>
+                {n.detail && <div className="pipe-node-detail">{n.detail}</div>}
+              </div>
+            </div>
+            {i<nodes.length-1 && <div className={`pipe-connector ${revealed.includes(i)?'revealed':''}`} style={{background:connColor||color,marginLeft:15}}/>}
+          </React.Fragment>
+        ))}
+      </div>
+      {note && <div className="pipe-note">{note}</div>}
+      <button className="pipe-replay-btn" onClick={play}>▶ Replay</button>
+    </div>
+  );
+}
+
 function PipelineTab() {
-  const steps = [
-    {icon:'📄',label:'PDFs\nOficiales',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
-    {icon:'✂️',label:'Chunks\nTexto',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
-    {icon:'🔢',label:'Embed\nings',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
-    {icon:'🗄️',label:'Chroma\nDB',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
-    {icon:'❓',label:'Pregunta\nUsuario',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
-    {icon:'🔍',label:'Similitud\nSemán.',c:'rgba(245,158,11,.08)',b:'rgba(245,158,11,.2)'},
-    {icon:'🤖',label:'GPT-4o\nmini',c:'rgba(0,122,255,.08)',b:'rgba(0,122,255,.15)'},
-    {icon:'💬',label:'Respuesta\nFinal',c:'rgba(22,163,74,.08)',b:'rgba(22,163,74,.2)'},
+  const [health, setHealth] = useState(null);
+  useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setHealth).catch(()=>{});}, []);
+
+  const vectorCount = health?.vectores?.toLocaleString() || '—';
+
+  const stackItems = [
+    ['🖥️','Hetzner VPS Ubuntu 24.04','4GB RAM'],
+    ['⚡','FastAPI + Uvicorn','API REST · puerto 8000'],
+    ['🌐','Nginx','reverse proxy · frontend compilado en dist/'],
+    ['🗄️','ChromaDB','vector store local · persistente en disco'],
+    ['🔢','OpenAI text-embedding-3-small','1536 dimensiones'],
+    ['🤖','GPT-4o-mini','generación de respuestas al ciudadano'],
+    ['✨','GPT-4o','narrativización de tablas en pipeline'],
+    ['💾','SQLite','logs de conversaciones · 21 columnas de métricas'],
   ];
+
+  const indexNodes = [
+    {icon:'📄',title:'PDFs oficiales de comunidades autónomas'},
+    {icon:'✂️',title:'Extracción de texto con pdfplumber',detail:'página a página'},
+    {icon:'🔤',title:'Normalización del texto'},
+    {icon:'📊',title:'Detección de tablas → texto narrativo',detail:'⚡ Llamada OpenAI GPT-4o'},
+    {icon:'🧩',title:'Chunker',detail:'fragmentos 500 tokens · 50 solapamiento'},
+    {icon:'🔢',title:'Vectorización',detail:'⚡ OpenAI text-embedding-3-small · 1536 dimensiones por chunk'},
+    {icon:'🗄️',title:'ChromaDB almacena vectores + metadatos',detail:`→ ${vectorCount} chunks indexados`},
+  ];
+
+  const queryNodes = [
+    {icon:'💬',title:'Ciudadano hace una pregunta en lenguaje natural'},
+    {icon:'🔢',title:'Vectorización de la pregunta',detail:'⚡ Llamada OpenAI text-embedding-3-small'},
+    {icon:'🔍',title:'Búsqueda por similitud coseno en ChromaDB',detail:'→ top-6 chunks más relevantes'},
+    {icon:'📝',title:'Construcción del prompt con contexto recuperado'},
+    {icon:'🤖',title:'Generación de respuesta',detail:'⚡ Llamada OpenAI GPT-4o-mini'},
+    {icon:'✅',title:'Respuesta con fuentes citadas al ciudadano',detail:'→ Log automático en SQLite · 21 métricas por consulta'},
+  ];
+
   return (
     <div style={{animation:'secIn .4s ease both'}}>
-      <div className="rag-wrap glass">
-        <div className="rag-title">Pipeline RAG — Arquitectura del sistema</div>
-        <div className="rag-pipe">
-          {steps.map((s,i)=>(
-            <React.Fragment key={i}>
-              <div className="rag-step" style={{animationDelay:`${i*.1}s`}}>
-                <div className="rag-box" style={{background:s.c,border:`1px solid ${s.b}`}}>
-                  <div className="rag-ico">{s.icon}</div>
-                  <div className="rag-lbl">{s.label}</div>
-                </div>
-              </div>
-              {i<steps.length-1 && <div className="rag-arr" style={{animationDelay:`${i*.1+.05}s`}}><div className="rag-dot" style={{animationDelay:`${i*.25}s`}}/></div>}
-            </React.Fragment>
+      <div className="glass" style={{borderRadius:'var(--radius)',padding:'24px 28px',marginBottom:24}}>
+        <h2 style={{fontFamily:'Playfair Display,serif',fontSize:'1.3rem',fontWeight:600,marginBottom:20}}>Arquitectura del sistema</h2>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {stackItems.map(([ico,name,desc])=>(
+            <div key={name} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 14px',borderRadius:12,background:'rgba(255,255,255,.45)',border:'1px solid rgba(255,255,255,.7)'}}>
+              <span style={{fontSize:18,flexShrink:0,width:28,textAlign:'center'}}>{ico}</span>
+              <span style={{fontWeight:600,fontSize:'.84rem',minWidth:220}}>{name}</span>
+              <span style={{fontSize:'.76rem',color:'var(--text-muted)'}}>{desc}</span>
+            </div>
           ))}
         </div>
-        <div className="rag-descs">
-          {[
-            ['Fragmentación','Chunks de 500 palabras, solapamiento de 50 palabras para preservar contexto entre segmentos.'],
-            ['Embeddings','OpenAI text-embedding-3-small genera vectores de 1536 dimensiones por chunk.'],
-            ['Recuperación','Búsqueda coseno sobre ChromaDB, recuperando los top-6 chunks más similares a la pregunta.'],
-            ['Generación','GPT-4o-mini recibe contexto recuperado + pregunta y genera respuesta fundamentada en fuentes oficiales.'],
-          ].map(([l,d])=>(
-            <div key={l} className="rag-desc glass"><div className="rag-desc-lbl">{l}</div><p>{d}</p></div>
-          ))}
-        </div>
+      </div>
+      <div className="pipeline-two-col">
+        <PipelineAnimCard
+          color="#007AFF"
+          connColor="#007AFF"
+          title="Pipeline de indexación"
+          subtitle="Preparación del conocimiento"
+          nodes={indexNodes}
+          note="Ejecutado en local — los PDFs grandes requieren más RAM de la disponible en el servidor de producción"
+        />
+        <PipelineAnimCard
+          color="#F59E0B"
+          connColor="#F59E0B"
+          title="Pipeline de consulta"
+          subtitle="Respuesta al ciudadano en tiempo real"
+          nodes={queryNodes}
+          note="Cada consulta genera 21 métricas en SQLite"
+        />
       </div>
     </div>
   );
@@ -980,8 +1199,14 @@ function TecnicoTab() {
   const [chunks, setChunks] = useState([]);
   const [sessionStats, setSessionStats] = useState({total:0,simMedia:0,tiempoMedio:0,evals:[]});
   const [showChunks, setShowChunks] = useState(false);
+  const [suggPills, setSuggPills] = useState(INITIAL_PILLS);
+  const [histMetrics, setHistMetrics] = useState(null);
   const sesionIdRef = useRef(null);
   const msgEndRef = useRef(null);
+
+  useEffect(()=>{
+    fetch('/api/metrics').then(r=>r.json()).then(setHistMetrics).catch(()=>{});
+  },[]);
 
   useEffect(() => {
     msgEndRef.current?.parentElement?.scrollTo({top:msgEndRef.current.offsetTop,behavior:'smooth'});
@@ -1019,13 +1244,16 @@ function TecnicoTab() {
       timers.forEach(t=>clearTimeout(t));
       setPhases(Array(5).fill('done'));
       setChunks(data.chunks || []);
-      setMessages(m=>[...m,{role:'assistant',text:data.respuesta||'Sin respuesta.',convId:data.id}]);
+      const respuesta = data.respuesta||'Sin respuesta.';
+      setMessages(m=>[...m,{role:'assistant',text:respuesta,convId:data.id}]);
       const lat = data.latencia_ms || (Date.now()-t0);
       const sim = data.score_similitud_media ? data.score_similitud_media/100 : 0.75;
       setSessionStats(prev=>{
         const total = prev.total+1;
         return {total, simMedia:(prev.simMedia*prev.total+sim)/total, tiempoMedio:Math.round((prev.tiempoMedio*prev.total+lat)/total), evals:[...prev.evals,{q:pregunta,sim,time:lat}].slice(-5)};
       });
+      const topic = detectPillTopic(respuesta + ' ' + pregunta);
+      setSuggPills(PILL_SETS[topic] || PILL_SETS.default);
     } catch(e) {
       timers.forEach(t=>clearTimeout(t));
       setPhases(Array(5).fill('idle'));
@@ -1059,7 +1287,12 @@ function TecnicoTab() {
             <div ref={msgEndRef}/>
           </div>
           <div className="chat-input-area">
-            <div className="chat-pill">
+            <div className="sugg-pill-grid">
+              {suggPills.map((s,i)=>(
+                <button key={i} className="sugg-pill-sm" onClick={()=>{setInput(s);}}>{s}</button>
+              ))}
+            </div>
+            <div className="chat-pill" style={{marginTop:8}}>
               <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSend()} placeholder="Haz una consulta para ver el pipeline..."/>
               <button className="send-btn" onClick={handleSend}><SendIcon/></button>
             </div>
@@ -1093,6 +1326,24 @@ function TecnicoTab() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {histMetrics && (
+            <div className="glass" style={{borderRadius:14,padding:16}}>
+              <div style={{fontSize:'.75rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-secondary)',marginBottom:10}}>Métricas históricas</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                {[
+                  ['Total consultas',histMetrics.total_consultas?.toLocaleString()||'—'],
+                  ['Similitud media',histMetrics.score_medio_global!=null?histMetrics.score_medio_global.toFixed(1)+'%':'—'],
+                  ['Coste acumulado',histMetrics.coste_total_eur!=null?'€'+histMetrics.coste_total_eur.toFixed(4):'—'],
+                  ['Latencia media',histMetrics.latencia_media_ms?histMetrics.latencia_media_ms+'ms':'—'],
+                ].map(([l,v])=>(
+                  <div key={l} style={{textAlign:'center',background:'rgba(0,122,255,.04)',borderRadius:10,padding:'8px 4px',border:'1px solid rgba(0,122,255,.1)'}}>
+                    <div style={{fontFamily:'Playfair Display,serif',fontSize:'1.1rem',fontWeight:600,color:'var(--blue)'}}>{v}</div>
+                    <div style={{fontSize:'.65rem',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.05em'}}>{l}</div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1131,6 +1382,8 @@ function TecnicoTab() {
 function InsightsTab() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [expandedRow, setExpandedRow] = useState(null);
 
   useEffect(() => {
     fetch('/api/metrics').then(r=>r.json()).then(d=>{setMetrics(d);setLoading(false);}).catch(()=>setLoading(false));
@@ -1138,9 +1391,18 @@ function InsightsTab() {
 
   const COLORS = ['rgba(0,122,255,.12)','rgba(245,158,11,.12)','rgba(22,163,74,.1)','rgba(139,92,246,.1)','rgba(239,68,68,.08)','rgba(0,122,255,.08)','rgba(245,158,11,.08)','rgba(22,163,74,.07)'];
   const TC = ['#0057b8','#92400e','#166534','#5b21b6','#991b1b','#0057b8','#92400e','#166534'];
-  const getVerdict = s => {
-    if (s > 80) return {label:'✅ Coherente',style:{background:'rgba(22,163,74,.1)',color:'#166534'}};
-    if (s > 60) return {label:'⚠️ Parcial',style:{background:'rgba(245,158,11,.1)',color:'#92400e'}};
+
+  const getVerdict = (score, pregunta) => {
+    const p = (pregunta||'').toLowerCase();
+    const fueraDominioKw = ['hora','fecha','cumpleaños','fútbol','clima','predecir'];
+    const jailbreakKw = ['mentira','incorrecto','verifica','estás equivocado','ignore','forget','act as'];
+    const sinCoberturaKw = ['valencia','cataluña','país vasco','galicia','navarra','asturias','cantabria','aragón','baleares','canarias','extremadura','la rioja','ceuta','melilla'];
+    const s = score||0;
+    if (jailbreakKw.some(k=>p.includes(k)) && s<40) return {label:'🔓 Jailbreak',style:{background:'rgba(139,92,246,.12)',color:'#5b21b6'}};
+    if (fueraDominioKw.some(k=>p.includes(k)) || s<30) return {label:'🚫 Fuera dominio',style:{background:'rgba(239,68,68,.08)',color:'#991b1b'}};
+    if (s<35 && sinCoberturaKw.some(k=>p.includes(k))) return {label:'📭 Sin cobertura',style:{background:'rgba(107,114,128,.1)',color:'#374151'}};
+    if (s>=70) return {label:'✅ Coherente',style:{background:'rgba(22,163,74,.1)',color:'#166534'}};
+    if (s>=50) return {label:'⚠️ Parcial',style:{background:'rgba(245,158,11,.1)',color:'#92400e'}};
     return {label:'❌ Incoherente',style:{background:'rgba(239,68,68,.1)',color:'#991b1b'}};
   };
 
@@ -1150,25 +1412,67 @@ function InsightsTab() {
   const logs = metrics?.logs_recientes || [];
   const alertas = metrics?.alertas || {};
   const maxCount = temas[0]?.count || 1;
-  const topTema = temas[0]?.tema || '—';
+  const total = metrics?.total_consultas || 0;
+
+  // Compute category counts from logs
+  const cats = ['✅ Coherente','⚠️ Parcial','❌ Incoherente','🚫 Fuera dominio','🔓 Jailbreak','📭 Sin cobertura'];
+  const catCounts = {};
+  cats.forEach(c=>catCounts[c]=0);
+  logs.forEach(e=>{
+    const v = getVerdict(e.score_medio, e.pregunta);
+    if(catCounts[v.label]!==undefined) catCounts[v.label]++;
+  });
+  const catDefs = [
+    {label:'✅ Coherente',bg:'rgba(22,163,74,.08)',color:'#166534'},
+    {label:'⚠️ Parcial',bg:'rgba(245,158,11,.08)',color:'#92400e'},
+    {label:'❌ Incoherente',bg:'rgba(239,68,68,.07)',color:'#991b1b'},
+    {label:'🚫 Fuera dominio',bg:'rgba(239,68,68,.05)',color:'#991b1b'},
+    {label:'🔓 Jailbreak',bg:'rgba(139,92,246,.08)',color:'#5b21b6'},
+    {label:'📭 Sin cobertura',bg:'rgba(107,114,128,.07)',color:'#374151'},
+  ];
+
+  const filteredLogs = activeCategory ? logs.filter(e=>getVerdict(e.score_medio,e.pregunta).label===activeCategory) : logs;
+
+  // compute alerts counts from logs
+  const now = Date.now();
+  const fueraDom24h = logs.filter(e=>{
+    const age=(now-new Date(e.timestamp).getTime())/3600000;
+    const v=getVerdict(e.score_medio,e.pregunta);
+    return age<24 && v.label==='🚫 Fuera dominio';
+  }).length;
+  const jailbreakCount = logs.filter(e=>getVerdict(e.score_medio,e.pregunta).label==='🔓 Jailbreak').length;
+  const sinCobCount = logs.filter(e=>getVerdict(e.score_medio,e.pregunta).label==='📭 Sin cobertura').length;
+  const sim24h = logs.filter(e=>{const age=(now-new Date(e.timestamp).getTime())/3600000;return age<24;});
+  const simAvg24h = sim24h.length ? (sim24h.reduce((s,e)=>s+(e.score_medio||0),0)/sim24h.length).toFixed(1) : null;
+  const simHist = metrics?.score_medio_global?.toFixed(1) || null;
+
+  // least consulted doc
+  const docCounts = {};
+  logs.forEach(e=>(e.fuentes||[]).forEach(f=>{const d=f.documento||f;docCounts[d]=(docCounts[d]||0)+1;}));
+  const leastDoc = Object.entries(docCounts).sort((a,b)=>a[1]-b[1])[0];
 
   return (
     <div style={{animation:'secIn .4s ease both'}}>
       <div className="insights-wrap">
-        <div className="ins-header">Inteligencia sobre el sistema</div>
-        <div className="ins-metrics">
-          {[
-            {val:topTema, sub:temas[0]?`${temas[0].count} consultas`:'—', lbl:'Tema más consultado', c:'var(--blue)'},
-            {val:metrics?.pct_coherentes!=null?metrics.pct_coherentes+'%':'—', sub:`Sobre ${metrics?.total_consultas||0} evaluaciones`, lbl:'Coherencia media', c:'#22c55e'},
-            {val:metrics?.sin_respuesta_suficiente??'—', sub:`${metrics?.total_consultas?((metrics.sin_respuesta_suficiente/metrics.total_consultas)*100).toFixed(1):0}% del total`, lbl:'Sin respuesta suficiente', c:'var(--amber)'},
-          ].map((m,i)=>(
-            <div key={i} className="ins-metric glass" style={{animationDelay:`${i*.08}s`}}>
-              <div className="ins-metric-val" style={{color:m.c}}>{m.val}</div>
-              <div className="ins-metric-lbl">{m.lbl}</div>
-              <div className="ins-metric-sub">{m.sub}</div>
+        {/* FILA 0 — Total */}
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <div className="ins-total">{total.toLocaleString()}</div>
+          <div className="ins-total-sub">conversaciones registradas en total</div>
+        </div>
+
+        {/* FILA 1 — 6 category cards */}
+        <div className="ins-cat-grid">
+          {catDefs.map(c=>(
+            <div key={c.label} className={`ins-cat-card glass ${activeCategory===c.label?'active':''}`}
+              style={{background:c.bg}} onClick={()=>setActiveCategory(activeCategory===c.label?null:c.label)}>
+              <div className="ins-cat-icon">{c.label.split(' ')[0]}</div>
+              <div className="ins-cat-count" style={{color:c.color}}>{catCounts[c.label]||0}</div>
+              <div className="ins-cat-label">{c.label.replace(/^[^\s]+ /,'')}</div>
             </div>
           ))}
         </div>
+
+        {/* FILA 2 — Temas */}
         <div className="ins-section-title">Temas detectados</div>
         <div className="glass" style={{borderRadius:20,padding:'4px 8px'}}>
           <div className="tag-cloud">
@@ -1180,31 +1484,52 @@ function InsightsTab() {
             {temas.length===0&&<span style={{color:'var(--text-muted)',fontSize:'.82rem',padding:12}}>Sin datos aún — haz algunas consultas primero</span>}
           </div>
         </div>
-        <div className="ins-section-title">Log de evaluaciones</div>
+
+        {/* FILA 3 — Log con expand */}
+        <div className="ins-section-title">Log de evaluaciones {activeCategory && <span style={{fontSize:'.78rem',color:'var(--amber)',fontWeight:400}}>· filtrando: {activeCategory}</span>}</div>
         <div className="glass" style={{borderRadius:20,overflow:'hidden'}}>
           <table className="eval-table">
-            <thead><tr><th>Pregunta</th><th>Similitud</th><th>Veredicto</th><th>Hora</th></tr></thead>
+            <thead><tr><th>#</th><th>Pregunta</th><th>Similitud</th><th>Categoría</th><th>Hora</th><th></th></tr></thead>
             <tbody>
-              {logs.map((e,i)=>{
+              {filteredLogs.map((e,i)=>{
                 const sim = e.score_medio||0;
-                const v = getVerdict(sim);
+                const v = getVerdict(sim, e.pregunta);
+                const isOpen = expandedRow===i;
                 return (
-                  <tr key={i}>
-                    <td style={{maxWidth:240,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.pregunta}</td>
-                    <td><span style={{color:sim>80?'#22c55e':sim>60?'#F59E0B':'#ef4444',fontWeight:600}}>{sim?sim.toFixed(0)+'%':'—'}</span></td>
-                    <td><span className="eval-verdict" style={v.style}>{v.label}</span></td>
-                    <td style={{color:'var(--text-muted)'}}>{e.timestamp?.slice(11,16)||'—'}</td>
-                  </tr>
+                  <React.Fragment key={i}>
+                    <tr>
+                      <td style={{color:'var(--text-muted)',width:32}}>{e.id||i+1}</td>
+                      <td style={{maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.pregunta}</td>
+                      <td><span style={{color:sim>70?'#22c55e':sim>50?'#F59E0B':'#ef4444',fontWeight:600}}>{sim?sim.toFixed(0)+'%':'—'}</span></td>
+                      <td><span className="eval-verdict" style={v.style}>{v.label}</span></td>
+                      <td style={{color:'var(--text-muted)'}}>{e.timestamp?.slice(11,16)||'—'}</td>
+                      <td><button onClick={()=>setExpandedRow(isOpen?null:i)} style={{background:'none',border:'none',cursor:'none',fontSize:'.75rem',color:'var(--blue)',padding:'2px 6px',borderRadius:6,fontFamily:'DM Sans,sans-serif'}}>{isOpen?'▲ Cerrar':'▶ Ver'}</button></td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="eval-expand-row">
+                        <td colSpan={6}>
+                          <strong style={{fontSize:'.72rem',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.06em'}}>Respuesta del modelo:</strong>
+                          <p style={{marginTop:6}}>{e.respuesta||'Sin respuesta registrada'}</p>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
-              {logs.length===0&&<tr><td colSpan={4} style={{textAlign:'center',color:'var(--text-muted)',padding:16}}>Sin consultas aún</td></tr>}
+              {filteredLogs.length===0&&<tr><td colSpan={6} style={{textAlign:'center',color:'var(--text-muted)',padding:16}}>Sin consultas{activeCategory?' en esta categoría':' aún'}</td></tr>}
             </tbody>
           </table>
         </div>
-        <div className="ins-section-title">Alertas del sistema</div>
+
+        {/* FILA 4 — Alertas con datos reales */}
+        <div className="ins-section-title">Alertas automáticas</div>
         <div className="glass" style={{borderRadius:20,padding:16}}>
           {[
-            alertas.baja_similitud_24h>0 && {ico:'⚠️',text:`${alertas.baja_similitud_24h} consulta(s) con similitud < 60% en las últimas 24h`,bg:'rgba(245,158,11,.06)',border:'rgba(245,158,11,.15)'},
+            fueraDom24h>0 && {ico:'🚫',text:`${fueraDom24h} consulta(s) fuera de dominio en las últimas 24h`,bg:'rgba(239,68,68,.04)',border:'rgba(239,68,68,.12)'},
+            jailbreakCount>0 && {ico:'🔓',text:`${jailbreakCount} intento(s) de jailbreak detectados`,bg:'rgba(139,92,246,.05)',border:'rgba(139,92,246,.15)'},
+            sinCobCount>0 && {ico:'📭',text:`${sinCobCount} consulta(s) sin cobertura (documentos no indexados)`,bg:'rgba(107,114,128,.04)',border:'rgba(107,114,128,.12)'},
+            simAvg24h && simHist && {ico:parseFloat(simAvg24h)>=parseFloat(simHist)?'📈':'📉',text:`Similitud media últimas 24h: ${simAvg24h}% vs media histórica: ${simHist}%`,bg:'rgba(0,122,255,.03)',border:'rgba(0,122,255,.1)'},
+            leastDoc && {ico:'📄',text:`Documento menos consultado: ${leastDoc[0]} (${leastDoc[1]} consultas)`,bg:'rgba(245,158,11,.04)',border:'rgba(245,158,11,.12)'},
             alertas.feedbacks_negativos_7d>0 && {ico:'👎',text:`${alertas.feedbacks_negativos_7d} feedback(s) negativo(s) en los últimos 7 días`,bg:'rgba(239,68,68,.05)',border:'rgba(239,68,68,.12)'},
             {ico:'✅',text:'Sistema operativo y respondiendo correctamente',bg:'rgba(22,163,74,.04)',border:'rgba(22,163,74,.12)'},
           ].filter(Boolean).map((a,i)=>(
@@ -1244,12 +1569,15 @@ function App() {
       </div>
       {banner&&(
         <div className="legal-banner">
-          <span style={{fontSize:22,flexShrink:0}}>🔒</span>
-          <div style={{flex:1}}>
-            <p style={{fontSize:'.82rem',fontWeight:600,marginBottom:2}}>Información con fines educativos y de transparencia ciudadana</p>
-            <p style={{fontSize:'.74rem',color:'var(--text-secondary)'}}>Esta plataforma utiliza datos públicos oficiales. No almacena datos personales ni realiza seguimiento de usuarios.</p>
-          </div>
-          <button className="banner-btn" onClick={()=>setBanner(false)}>Entendido</button>
+          <div style={{fontSize:40,marginBottom:4}}>🔒</div>
+          <h3 style={{fontFamily:'Playfair Display,serif',fontSize:'1.1rem',fontWeight:600,marginBottom:12}}>Aviso importante antes de continuar</h3>
+          <p style={{fontSize:'.82rem',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:10}}>
+            La información proporcionada proviene de documentos presupuestarios públicos oficiales. El uso que el usuario haga de dicha información es de su exclusiva responsabilidad. Esta plataforma no garantiza la exactitud, completitud o vigencia de los datos mostrados.
+          </p>
+          <p style={{fontSize:'.82rem',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:16}}>
+            Esta plataforma no recoge ni almacena datos personales identificables. Las consultas realizadas se registran de forma anónima con fines de mejora del servicio.
+          </p>
+          <button className="banner-btn" onClick={()=>setBanner(false)}>He leído y acepto continuar</button>
         </div>
       )}
     </>
