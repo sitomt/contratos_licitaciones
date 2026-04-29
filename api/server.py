@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 import json
 import uuid
@@ -36,7 +37,6 @@ NOMBRES_DOCUMENTOS = {
     "resumen_ingresos_y_gastos.pdf": "Resumen Ingresos y Gastos Madrid",
     "andalucia.pdf": "Presupuestos Comunidad de Andalucía 2026",
     "castillayleon.pdf": "Presupuestos Castilla y León 2026",
-    "valencia.pdf": "Presupuestos Comunidad Valenciana 2026",
 }
 
 
@@ -246,28 +246,61 @@ def chat(req: ChatRequest):
     for chunk in chunks:
         contexto += f"[Pagina {chunk['pagina']} | {chunk['fuente']}] {chunk['texto']}\n\n"
 
-    prompt = f"""Eres un asistente de transparencia publica que ayuda a los ciudadanos a entender los presupuestos de las comunidades autonomas de España 2026.
+    prompt = f"""Eres Civitas, un asistente de transparencia pública que ayuda a los ciudadanos españoles a entender los presupuestos de sus comunidades autónomas en 2026.
 
-Responde de forma clara y simple. Sigue estas reglas:
-- Si tienes datos exactos en el contexto, usalos y cita la pagina
-- Si la pregunta pide comparar varias comunidades, lista TODAS las que aparezcan en el contexto
-- Nunca inventes cifras
-- Si no tienes suficiente informacion, indícalo claramente
+REGLAS DE FORMATO — síguelas siempre:
+- Responde en prosa clara, en párrafos. NUNCA uses guiones como viñetas ni listas con "-".
+- Si la respuesta compara dos o más comunidades, empieza con una tabla markdown simple con los datos clave, luego un párrafo de conclusión.
+- Máximo 3 párrafos o una tabla + 1 párrafo de conclusión.
+- Tono cercano y ciudadano, no técnico ni administrativo.
+- Si tienes el dato exacto, cítalo con su página fuente.
+- Si no tienes datos de una comunidad, dilo claramente en una sola frase y sugiere qué comunidades sí puedes comparar.
+- NUNCA inventes cifras.
+
+FORMATO DE RESPUESTA:
+Devuelve tu respuesta en este formato JSON exacto:
+{{
+  "texto": "tu respuesta en prosa o con tabla markdown aquí",
+  "grafico": {{
+    "tipo": "barras" | "tarta" | "lineas" | null,
+    "titulo": "título del gráfico",
+    "datos": [
+      {{"label": "Comunidad o categoría", "valor": 1234.5, "unidad": "M€"}}
+    ]
+  }}
+}}
+
+REGLAS DEL GRÁFICO:
+- Incluye "grafico" solo cuando realmente aporte claridad visual: comparativas entre comunidades, distribución del presupuesto por área, rankings.
+- Si el gráfico no aporta nada (preguntas conceptuales, preguntas fuera de dominio, respuestas sin datos numéricos), pon "grafico": null.
+- Usa "barras" para comparativas entre comunidades.
+- Usa "tarta" para distribución porcentual de una comunidad.
+- Usa "lineas" solo si hay datos temporales de varios años.
+- Los valores deben ser números, no strings.
 
 CONTEXTO DEL PRESUPUESTO:
 {contexto}
 
 PREGUNTA DEL CIUDADANO:
 {req.pregunta}
-
-RESPUESTA:"""
+"""
 
     gpt_resp = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role":"user","content":prompt}],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.3
     )
-    respuesta = gpt_resp.choices[0].message.content
+    respuesta_raw = gpt_resp.choices[0].message.content
+
+    try:
+        texto_limpio = re.sub(r'```json\s*|\s*```', '', respuesta_raw).strip()
+        respuesta_json = json.loads(texto_limpio)
+        respuesta = respuesta_json.get("texto", respuesta_raw)
+        grafico_data = respuesta_json.get("grafico", None)
+    except (json.JSONDecodeError, AttributeError):
+        respuesta = respuesta_raw
+        grafico_data = None
+
     latencia_ms = int((time.time() - t0) * 1000)
 
     fuentes_dict = {}
@@ -326,6 +359,7 @@ RESPUESTA:"""
         "score_similitud_media": score_medio,
         "latencia_ms": latencia_ms,
         "estrategia_busqueda": estrategia,
+        "grafico": grafico_data,
     }
 
 
@@ -397,11 +431,13 @@ def feedback(conv_id: int, req: FeedbackRequest):
 
 @app.get("/api/metrics")
 def metrics():
+    from collections import Counter
+
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) FROM conversaciones")
-    total = cur.fetchone()[0]
+    total_real = cur.fetchone()[0]
 
     cur.execute("SELECT AVG(score_medio) FROM conversaciones WHERE score_medio IS NOT NULL")
     score_avg = round(cur.fetchone()[0] or 0, 1)
@@ -419,36 +455,47 @@ def metrics():
 
     cur.execute("SELECT COUNT(*) FROM conversaciones WHERE evaluacion_agente='coherente'")
     coherentes = cur.fetchone()[0]
-    pct_coherentes = round(coherentes/total*100, 1) if total > 0 else 0
+    pct_coherentes = round(coherentes / total_real * 100, 1) if total_real > 0 else 0
 
     cur.execute("""
         SELECT tema_detectado, COUNT(*) as cnt FROM conversaciones
         WHERE tema_detectado IS NOT NULL
-        GROUP BY tema_detectado ORDER BY cnt DESC LIMIT 8
+        GROUP BY tema_detectado ORDER BY cnt DESC LIMIT 10
     """)
     temas = [{"tema": r[0], "count": r[1]} for r in cur.fetchall()]
 
     cur.execute("""
-        SELECT id, timestamp, pregunta, score_medio, evaluacion_agente,
-               feedback_tipo, tema_detectado, latencia_ms
-        FROM conversaciones ORDER BY id DESC LIMIT 20
+        SELECT id, timestamp, pregunta, respuesta, score_medio,
+               evaluacion_agente, feedback_tipo, tema_detectado, latencia_ms
+        FROM conversaciones ORDER BY id DESC LIMIT 50
     """)
-    cols = ["id","timestamp","pregunta","score_medio","evaluacion_agente",
-            "feedback_tipo","tema_detectado","latencia_ms"]
+    cols = ["id", "timestamp", "pregunta", "respuesta", "score_medio",
+            "evaluacion_agente", "feedback_tipo", "tema_detectado", "latencia_ms"]
     logs = [dict(zip(cols, row)) for row in cur.fetchall()]
 
     cur.execute("""
         SELECT COUNT(*) FROM conversaciones
-        WHERE timestamp > datetime('now','-1 day') AND score_medio < 60
+        WHERE timestamp > datetime('now', '-1 day') AND score_medio < 60
     """)
     alertas_baja = cur.fetchone()[0]
 
     cur.execute("""
         SELECT COUNT(*) FROM conversaciones
-        WHERE feedback_tipo='negativo'
-        AND timestamp > datetime('now','-7 day')
+        WHERE feedback_tipo = 'negativo'
+        AND timestamp > datetime('now', '-7 day')
     """)
     feedbacks_negativos = cur.fetchone()[0]
+
+    cur.execute("SELECT fuentes FROM conversaciones WHERE fuentes IS NOT NULL")
+    doc_counter = Counter()
+    for row in cur.fetchall():
+        try:
+            fuentes = json.loads(row[0])
+            for f in fuentes:
+                doc_counter[f.get("documento", "")] += 1
+        except Exception:
+            pass
+    doc_menos = min(doc_counter, key=doc_counter.get) if doc_counter else None
 
     cur.execute("""
         SELECT estrategia_busqueda, COUNT(*) as cnt FROM conversaciones
@@ -459,7 +506,7 @@ def metrics():
 
     conn.close()
     return {
-        "total_consultas": total,
+        "total_consultas": total_real,
         "score_medio_global": score_avg,
         "latencia_media_ms": latencia_avg,
         "coste_total_eur": coste_total,
@@ -467,11 +514,13 @@ def metrics():
         "pct_coherentes": pct_coherentes,
         "temas_top": temas,
         "logs_recientes": logs,
+        "total_logs_mostrados": len(logs),
         "estrategias_busqueda": estrategias,
         "alertas": {
             "baja_similitud_24h": alertas_baja,
             "feedbacks_negativos_7d": feedbacks_negativos,
-        }
+            "documento_menos_consultado": doc_menos,
+        },
     }
 
 

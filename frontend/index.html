@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ecosistema de Cristal</title>
+<title>Civitas — Transparencia Presupuestaria</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -372,9 +372,7 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
     </div>
     <div class="hp-eyebrow" id="hpEyebrow">Máster en Inteligencia Artificial · ISDI 2026</div>
     <h1 class="hp-title" id="hpTitle">
-      <span class="hp-word"><span class="hp-word-inner" id="w0">Ecosistema</span></span>
-      <span class="hp-word"><span class="hp-word-inner" id="w1">de</span></span>
-      <span class="hp-word"><span class="hp-word-inner" id="w2">Cristal</span></span>
+      <span class="hp-word"><span class="hp-word-inner" id="w0">Civitas</span></span>
     </h1>
     <p class="hp-sub" id="hpSub">Transparencia presupuestaria mediante inteligencia artificial</p>
     <div class="hp-pills" id="hpPills">
@@ -436,9 +434,7 @@ function runHpSequence(){
   setTimeout(()=>{document.getElementById('hpLineWrap').classList.add('show');document.getElementById('hpLine').classList.add('draw');},800);
   setTimeout(()=>document.getElementById('hpEyebrow').classList.add('show'),1400);
   setTimeout(()=>document.getElementById('w0').classList.add('reveal'),1900);
-  setTimeout(()=>document.getElementById('w1').classList.add('reveal'),2050);
-  setTimeout(()=>document.getElementById('w2').classList.add('reveal'),2200);
-  setTimeout(()=>document.getElementById('hpSub').classList.add('show'),2600);
+  setTimeout(()=>document.getElementById('hpSub').classList.add('show'),2300);
   document.querySelectorAll('.hp-pill').forEach((p,i)=>setTimeout(()=>p.classList.add('show'),3100+i*120));
   setTimeout(()=>{document.getElementById('hpCta').classList.add('show');document.getElementById('hpScrollHint').classList.add('show');},3700);
 }
@@ -558,49 +554,94 @@ function FeedbackBar({ convId }) {
   );
 }
 
+function PlotlyChart({ grafico }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !grafico?.tipo || !grafico?.datos?.length) return;
+    const labels = grafico.datos.map(d => d.label);
+    const valores = grafico.datos.map(d => d.valor);
+    const unidad = grafico.datos[0]?.unidad || '';
+    const base = {
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+      height:220, font:{family:'DM Sans',size:11,color:'#5a5650'},
+      title:{text:grafico.titulo||'',font:{family:'Playfair Display,serif',size:12},x:0},
+      showlegend:false, margin:{l:130,r:16,t:40,b:30},
+    };
+    let trace;
+    if (grafico.tipo === 'barras') {
+      trace = {
+        type:'bar', orientation:'h', x:valores, y:labels,
+        marker:{color:labels.map((_,i)=>i===0?'#F59E0B':'#007AFF')},
+        hovertemplate:`%{x} ${unidad}<extra></extra>`,
+      };
+    } else if (grafico.tipo === 'tarta') {
+      trace = {
+        type:'pie', labels, values:valores,
+        marker:{colors:['#F59E0B','#007AFF','#22c55e','#8b5cf6','#ef4444']},
+        textinfo:'label+percent',
+        hovertemplate:`%{label}: %{value} ${unidad}<extra></extra>`,
+      };
+      base.margin = {l:16,r:16,t:40,b:16};
+    } else {
+      trace = {type:'scatter',mode:'lines+markers',x:labels,y:valores};
+    }
+    if (window.Plotly && ref.current) {
+      window.Plotly.newPlot(ref.current,[trace],base,{responsive:true,displayModeBar:false});
+    }
+    return () => { if (ref.current && window.Plotly) window.Plotly.purge(ref.current); };
+  }, []);
+  return <div ref={ref} style={{width:'100%',borderRadius:12,overflow:'hidden',marginTop:6}}/>;
+}
+
 // ══ CIUDADANO ══
 function CiudadanoSection() {
-  const [messages, setMessages] = useState([{role:'assistant', text:'Hola, soy el asistente de Ecosistema de Cristal. Puedo ayudarte a consultar información sobre presupuestos públicos españoles con datos oficiales verificados. ¿Qué deseas saber?', fuentes:[], convId:null}]);
+  const [messages, setMessages] = useState([{role:'assistant',text:'Hola, soy Civitas, tu asistente de transparencia presupuestaria. Puedo ayudarte a consultar información sobre presupuestos públicos españoles con datos oficiales verificados. ¿Qué deseas saber?',fuentes:[],convId:null,grafico:null}]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [suggPills, setSuggPills] = useState(INITIAL_PILLS);
+  const [sidebarHealth, setSidebarHealth] = useState(null);
+  const [sidebarMetrics, setSidebarMetrics] = useState(null);
   const sesionIdRef = useRef(null);
   const msgEndRef = useRef(null);
 
   useEffect(() => {
-    msgEndRef.current?.parentElement?.scrollTo({top: msgEndRef.current.offsetTop, behavior:'smooth'});
+    msgEndRef.current?.parentElement?.scrollTo({top:msgEndRef.current.offsetTop,behavior:'smooth'});
   }, [messages, typing]);
+
+  useEffect(() => {
+    fetch('/api/health').then(r=>r.json()).then(setSidebarHealth).catch(()=>{});
+    fetch('/api/metrics').then(r=>r.json()).then(setSidebarMetrics).catch(()=>{});
+  }, []);
 
   const send = useCallback(async (q) => {
     const pregunta = q || input.trim();
     if (!pregunta || typing) return;
     setInput('');
-    setMessages(m => [...m, { role:'user', text:pregunta, fuentes:[], convId:null }]);
+    setMessages(m => [...m, {role:'user',text:pregunta,fuentes:[],convId:null,grafico:null}]);
     setTyping(true);
     try {
       const resp = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pregunta, historial: [], sesion_id: sesionIdRef.current })
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({pregunta,historial:[],sesion_id:sesionIdRef.current})
       });
       const data = await resp.json();
       if (!sesionIdRef.current) sesionIdRef.current = data.sesion_id;
       const respuesta = data.respuesta || 'Sin respuesta.';
       setMessages(m => [...m, {
-        role: 'assistant',
-        text: respuesta,
-        fuentes: data.fuentes || [],
-        convId: data.id
+        role:'assistant', text:respuesta, fuentes:data.fuentes||[],
+        convId:data.id, grafico:data.grafico||null,
       }]);
+      setSidebarMetrics(prev => prev ? {...prev,total_consultas:(prev.total_consultas||0)+1} : null);
       const topic = detectPillTopic(respuesta + ' ' + pregunta);
       setSuggPills(PILL_SETS[topic] || PILL_SETS.default);
     } catch(e) {
-      setMessages(m => [...m, { role:'assistant', text:'⚠️ Error de conexión. Asegúrate de que la API está corriendo en el puerto 8000.', fuentes:[], convId:null }]);
+      setMessages(m => [...m, {role:'assistant',text:'⚠️ Error de conexión. Asegúrate de que la API está corriendo en el puerto 8000.',fuentes:[],convId:null,grafico:null}]);
     }
     setTyping(false);
   }, [input, typing]);
 
-  const renderText = t => t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  const renderText = t => t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
 
   return (
     <div className="section section-enter">
@@ -612,28 +653,31 @@ function CiudadanoSection() {
           </div>
           <div className="chat-messages">
             {messages.map((msg,i) => (
-              <div key={i} className={`msg ${msg.role}`}>
-                <span className="msg-label">{msg.role==='user'?'Tú':'🔮 Asistente'}</span>
-                <div className="msg-bubble" dangerouslySetInnerHTML={{__html: renderText(msg.text)}} />
+              <div key={i} className={`msg ${msg.role}`} style={msg.grafico?{maxWidth:'96%'}:{}}>
+                <span className="msg-label">{msg.role==='user'?'Tú':'🔮 Civitas'}</span>
+                <div className="msg-bubble" dangerouslySetInnerHTML={{__html:renderText(msg.text)}}/>
+                {msg.role==='assistant' && msg.grafico && msg.grafico.tipo && (
+                  <PlotlyChart grafico={msg.grafico}/>
+                )}
                 {msg.role==='assistant' && msg.fuentes && msg.fuentes.length > 0 && (
                   <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:4,paddingLeft:2}}>
                     {msg.fuentes.map((f,fi) => (
                       <span key={fi} style={{fontSize:'.68rem',padding:'2px 8px',borderRadius:99,background:'rgba(0,122,255,.08)',color:'var(--blue)',border:'1px solid rgba(0,122,255,.15)'}}>
-                        📄 {f.documento} {f.paginas?.length ? `(p.${f.paginas.join(',')})` : ''}
+                        📄 {f.documento} {f.paginas?.length?`(p.${f.paginas.join(',')})`:'' }
                       </span>
                     ))}
                   </div>
                 )}
-                {msg.role==='assistant' && msg.convId && <FeedbackBar convId={msg.convId} />}
+                {msg.role==='assistant' && msg.convId && <FeedbackBar convId={msg.convId}/>}
               </div>
             ))}
             {typing && (
               <div className="msg assistant">
-                <span className="msg-label">🔮 Asistente</span>
+                <span className="msg-label">🔮 Civitas</span>
                 <div className="msg-bubble" style={{display:'flex',alignItems:'center',gap:8}}><Spinner/><span style={{fontSize:'.8rem',color:'var(--text-muted)',marginLeft:4}}>Consultando fuentes...</span></div>
               </div>
             )}
-            <div ref={msgEndRef} />
+            <div ref={msgEndRef}/>
           </div>
           <div className="chat-input-area">
             <div className="sugg-pill-grid">
@@ -642,14 +686,14 @@ function CiudadanoSection() {
               ))}
             </div>
             <div className="chat-pill" style={{marginTop:8}}>
-              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Pregunta sobre presupuestos públicos..." />
+              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Pregunta sobre presupuestos públicos..."/>
               <button className="send-btn" onClick={()=>send()}><SendIcon/></button>
             </div>
           </div>
         </div>
         <div className="sidebar">
           <div className="sidebar-card glass">
-            <h3>📊 Estado presupuestos</h3>
+            <h3>📊 Presupuestos 2026</h3>
             <div style={{marginBottom:12}}>
               <div className="budget-sec-lbl ap" style={{marginBottom:6}}>
                 <span style={{background:'rgba(22,163,74,.15)',color:'#166534',padding:'2px 8px',borderRadius:99,fontSize:'.65rem',fontWeight:700}}>🔍 INDEXADAS — disponibles en el chat</span>
@@ -669,6 +713,37 @@ function CiudadanoSection() {
               <div className="region-pills">{PRORROGADO.map(r=><span key={r} className="rpill pr">{r}</span>)}</div>
             </div>
           </div>
+          <div className="sidebar-card glass">
+            <h3>📈 Civitas en números</h3>
+            <div style={{display:'flex',flexDirection:'column',gap:0}}>
+              {[
+                [sidebarHealth?.vectores?.toLocaleString()||'…','fragmentos oficiales analizados'],
+                ['4','documentos presupuestarios indexados'],
+                [sidebarMetrics?.total_consultas?.toLocaleString()||'…','consultas respondidas'],
+                ['GPT-4o-mini · embedding-3-small','modelos de IA'],
+              ].map(([val,lbl],i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(0,0,0,.04)',gap:8}}>
+                  <span style={{fontSize:'.79rem',fontWeight:600,color:'var(--text-primary)',flexShrink:0,maxWidth:130}}>{val}</span>
+                  <span style={{fontSize:'.7rem',color:'var(--text-muted)',textAlign:'right',lineHeight:1.3}}>{lbl}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="sidebar-card glass">
+            <h3>💬 Los ciudadanos preguntan sobre...</h3>
+            {sidebarMetrics?.temas_top?.length > 0 ? (
+              <div style={{display:'flex',flexDirection:'column',gap:0}}>
+                {sidebarMetrics.temas_top.slice(0,4).map((t,i)=>(
+                  <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'1px solid rgba(0,0,0,.04)'}}>
+                    <span style={{fontSize:'.78rem',color:'var(--text-secondary)'}}>{t.tema}</span>
+                    <span style={{fontSize:'.7rem',padding:'2px 8px',borderRadius:99,background:'rgba(245,158,11,.1)',color:'#92400e',fontWeight:600}}>{t.count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{fontSize:'.78rem',color:'var(--text-muted)',fontStyle:'italic'}}>Sé el primero en preguntar</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -685,7 +760,7 @@ const COMP_DATA = [
       <div>
         <p style={{fontSize:'.82rem',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:12}}>El diseño de privacidad está integrado en cada capa del sistema, no añadido como capa posterior.</p>
         <ul className="comp-list" style={{listStyle:'none'}}>
-          {[['🚫','Sin cookies de tracking'],['🔒','Sin compartir datos con terceros'],['👤','Sin identificación de usuarios'],['🔐','Datos en tránsito cifrados HTTPS'],['🗑️','Sin logs persistentes de datos personales']].map(([ico,txt])=>(
+          {[['🚫','Sin cookies de tracking'],['🔒','Sin compartir datos con terceros'],['👤','Sin identificación de usuarios'],['🗑️','Sin logs persistentes de datos personales']].map(([ico,txt])=>(
             <li key={txt}><span>{ico}</span><span style={{fontSize:'.82rem',color:'var(--text-secondary)'}}>{txt}</span></li>
           ))}
         </ul>
@@ -704,21 +779,26 @@ const COMP_DATA = [
             {[
               ['Texto de la pregunta','Construir el contexto RAG y generar la respuesta'],
               ['Respuesta generada','Auditoría y control de calidad'],
-              ['Similitud media (score)','Medir relevancia de la recuperación'],
+              ['Similitud media (score)','Medir relevancia de la recuperación semántica'],
               ['Número de chunks recuperados','Métricas de rendimiento del sistema'],
               ['Fuentes consultadas (doc + páginas)','Trazabilidad de la información citada'],
-              ['Latencia en ms','Monitorización del rendimiento'],
+              ['Latencia en ms','Monitorización del rendimiento de la API'],
               ['Tokens enviados a OpenAI','Control de costes'],
               ['Tokens recibidos de OpenAI','Control de costes'],
               ['Coste estimado en €','Seguimiento económico del sistema'],
               ['Evaluación automática','Calidad de respuestas'],
+              ['Score de evaluación','Valor numérico de la evaluación'],
               ['Tema detectado','Análisis de uso y tendencias'],
-              ['Turno dentro de la sesión','Análisis de conversaciones'],
-              ['Feedback del usuario (👍/👎)','Mejora del sistema'],
+              ['Pregunta respondida (flag)','Detectar consultas sin respuesta suficiente'],
+              ['Longitud de la respuesta','Análisis de calidad'],
+              ['Turno dentro de la sesión','Análisis del flujo conversacional'],
+              ['Feedback del usuario (👍/👎)','Mejora supervisada del sistema'],
               ['Comentario de feedback','Mejora cualitativa'],
               ['ID de sesión anónimo','Agrupar turnos de una misma conversación'],
               ['Timestamp de la consulta','Análisis temporal de uso'],
-              ['Estrategia de búsqueda','Auditoría del método de recuperación RAG usado (global / filtrado por comunidad / balanceado)'],
+              ['Estrategia de búsqueda','Auditoría del sistema de recuperación'],
+              ['ID interno de conversación','Referencia técnica para feedback'],
+              ['Campo legacy (nulo)','Conservado por compatibilidad histórica'],
             ].map(([d,u])=>(
               <tr key={d}>
                 <td style={{fontWeight:500}}>{d}</td>
@@ -729,7 +809,7 @@ const COMP_DATA = [
           </tbody>
         </table>
         <p style={{fontSize:'.7rem',color:'var(--text-muted)',marginTop:10,lineHeight:1.5,padding:'8px 10px',background:'rgba(0,0,0,.025)',borderRadius:8}}>
-          No se recoge ningún dato identificable del usuario. El ID de sesión es un UUID generado aleatoriamente en el navegador, sin vinculación a ninguna cuenta, IP ni dispositivo.
+          22 columnas registradas por consulta · Ningún dato es identificable · ID de sesión generado aleatoriamente en el navegador sin vinculación a cuenta, IP ni dispositivo.
         </p>
       </div>
     )
@@ -1117,74 +1197,154 @@ function PipelineAnimCard({color, title, subtitle, nodes, note, connColor}) {
   );
 }
 
+function ArchitectureSVG() {
+  const [tip, setTip] = useState(null);
+  const nodes = [
+    {id:'browser',x:10,y:88,w:100,h:44,emoji:'🌐',label:'Navegador',color:'#F59E0B',desc:'React SPA · interface del ciudadano',ext:true},
+    {id:'nginx',x:188,y:88,w:88,h:44,emoji:'🔀',label:'Nginx',color:'#22c55e',desc:'Reverse proxy · Puerto 80 · Frontend en dist/'},
+    {id:'fastapi',x:316,y:88,w:88,h:44,emoji:'⚡',label:'FastAPI',color:'#007AFF',desc:'API REST · Puerto 8000 · 9 endpoints'},
+    {id:'chromadb',x:444,y:46,w:96,h:44,emoji:'🗄️',label:'ChromaDB',color:'#8b5cf6',desc:'Vector store local · 1.621 embeddings · Búsqueda coseno'},
+    {id:'sqlite',x:444,y:130,w:96,h:44,emoji:'💾',label:'SQLite',color:'#F59E0B',desc:'Logs · conversaciones.db · 22 columnas por consulta'},
+    {id:'openai',x:592,y:88,w:102,h:44,emoji:'🤖',label:'OpenAI API',color:'#22c55e',desc:'GPT-4o-mini · GPT-4o · text-embedding-3-small',ext:true},
+  ];
+  return (
+    <div style={{position:'relative'}}>
+      <svg viewBox="0 0 720 210" style={{width:'100%',height:'auto',display:'block'}}>
+        <defs>
+          {[['amber','#F59E0B'],['green','#22c55e'],['purple','#8b5cf6'],['blue','#007AFF']].map(([n,c])=>(
+            <marker key={n} id={`arr-${n}`} markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 z" fill={c}/>
+            </marker>
+          ))}
+        </defs>
+        <rect x="172" y="20" width="378" height="170" rx="14" fill="rgba(0,122,255,.025)" stroke="rgba(0,122,255,.2)" strokeWidth="1.5" strokeDasharray="5 3"/>
+        <text x="182" y="36" fontSize="9" fill="rgba(0,122,255,.45)" fontFamily="DM Sans,sans-serif" fontWeight="600" letterSpacing="0.1em">HETZNER VPS — Ubuntu 24.04</text>
+        <line x1="112" y1="110" x2="184" y2="110" stroke="#F59E0B" strokeWidth="1.5" markerEnd="url(#arr-amber)"/>
+        <text x="148" y="104" fontSize="9" fill="#92400e" textAnchor="middle" fontFamily="DM Sans,sans-serif">HTTP/80</text>
+        <line x1="278" y1="110" x2="312" y2="110" stroke="#22c55e" strokeWidth="1.5" markerEnd="url(#arr-green)"/>
+        <text x="295" y="104" fontSize="9" fill="#166534" textAnchor="middle" fontFamily="DM Sans,sans-serif">:8000</text>
+        <line x1="406" y1="96" x2="440" y2="76" stroke="#8b5cf6" strokeWidth="1.5" markerEnd="url(#arr-purple)"/>
+        <text x="430" y="78" fontSize="9" fill="#5b21b6" textAnchor="middle" fontFamily="DM Sans,sans-serif">vectores</text>
+        <line x1="406" y1="124" x2="440" y2="144" stroke="#F59E0B" strokeWidth="1.5" markerEnd="url(#arr-amber)"/>
+        <text x="430" y="160" fontSize="9" fill="#92400e" textAnchor="middle" fontFamily="DM Sans,sans-serif">logs</text>
+        <path d="M404 110 Q 500 48 589 110" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="4 2" markerEnd="url(#arr-green)"/>
+        <text x="496" y="64" fontSize="9" fill="#166534" textAnchor="middle" fontFamily="DM Sans,sans-serif">embed + chat</text>
+        {nodes.map(n=>(
+          <g key={n.id} onMouseEnter={()=>setTip(n)} onMouseLeave={()=>setTip(null)}>
+            <rect x={n.x} y={n.y} width={n.w} height={n.h} rx="10" fill={`${n.color}18`} stroke={n.color} strokeWidth="1.5"/>
+            <text x={n.x+n.w/2} y={n.y+14} fontSize="15" textAnchor="middle" dominantBaseline="middle">{n.emoji}</text>
+            <text x={n.x+n.w/2} y={n.y+n.h-10} fontSize="10" textAnchor="middle" fontFamily="DM Sans,sans-serif" fontWeight="600" fill="#1a1814">{n.label}</text>
+          </g>
+        ))}
+      </svg>
+      {tip && (
+        <div style={{position:'absolute',top:4,left:'50%',transform:'translateX(-50%)',background:'rgba(255,255,255,.96)',border:'1px solid rgba(0,0,0,.08)',borderRadius:10,padding:'5px 14px',fontSize:'.73rem',color:'var(--text-secondary)',boxShadow:'0 4px 16px rgba(0,0,0,.1)',whiteSpace:'nowrap',zIndex:10,pointerEvents:'none'}}>
+          <strong style={{color:'var(--text-primary)'}}>{tip.label}</strong> · {tip.desc}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PipelineHorizCard({ color, title, subtitle, nodes, note }) {
+  const [revealed, setRevealed] = useState([]);
+  const [playing, setPlaying] = useState(false);
+  const timerRef = useRef([]);
+
+  const play = () => {
+    if (playing) return;
+    setPlaying(true);
+    setRevealed([]);
+    timerRef.current.forEach(t => clearTimeout(t));
+    timerRef.current = nodes.map((_,i) => setTimeout(() => setRevealed(r=>[...r,i]), i*200));
+    setTimeout(() => setPlaying(false), nodes.length*200+400);
+  };
+
+  useEffect(() => {
+    const t = setTimeout(play, 400);
+    return () => { clearTimeout(t); timerRef.current.forEach(c=>clearTimeout(c)); };
+  }, []);
+
+  return (
+    <div className="glass" style={{borderRadius:'var(--radius)',padding:20,borderTop:`3px solid ${color}`,marginBottom:16}}>
+      <div style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+        <div>
+          <div style={{fontFamily:'Playfair Display,serif',fontSize:'1rem',fontWeight:600,color,marginBottom:3}}>{title}</div>
+          <div style={{fontSize:'.74rem',color:'var(--text-muted)'}}>{subtitle}</div>
+        </div>
+        <button onClick={play} style={{padding:'5px 12px',borderRadius:99,background:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.8)',fontSize:'.74rem',fontFamily:'DM Sans,sans-serif',cursor:'none',color:'var(--text-secondary)',flexShrink:0}}>▶ Replay</button>
+      </div>
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'flex-start',gap:0}}>
+        {nodes.map((n,i)=>(
+          <React.Fragment key={i}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',opacity:revealed.includes(i)?1:0,transform:revealed.includes(i)?'scale(1)':'scale(0)',transition:'opacity .25s,transform .25s cubic-bezier(.34,1.56,.64,1)',padding:'4px 5px',minWidth:66}}>
+              <div style={{width:38,height:38,borderRadius:'50%',background:`${color}15`,border:`2px solid ${color}55`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,marginBottom:4}}>{n.icon}</div>
+              <div style={{fontSize:'.6rem',fontWeight:600,color:'var(--text-primary)',lineHeight:1.25,maxWidth:70}}>{n.title}</div>
+              {n.detail && <div style={{fontSize:'.57rem',color:'var(--text-muted)',lineHeight:1.2,maxWidth:70,marginTop:2}}>{n.detail}</div>}
+            </div>
+            {i<nodes.length-1 && (
+              <div style={{display:'flex',alignItems:'center',paddingBottom:14,opacity:revealed.includes(i)?1:0,transition:'opacity .25s',color,fontSize:12,flexShrink:0}}>→</div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      {note && <div style={{fontSize:'.72rem',color:'var(--text-muted)',padding:'8px 12px',borderRadius:8,background:'rgba(0,0,0,.03)',border:'1px solid rgba(0,0,0,.06)',lineHeight:1.5,marginTop:8}}>{note}</div>}
+    </div>
+  );
+}
+
 function PipelineTab() {
   const [health, setHealth] = useState(null);
-  useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setHealth).catch(()=>{});}, []);
+  const [metrics, setMetrics] = useState(null);
+  useEffect(()=>{
+    fetch('/api/health').then(r=>r.json()).then(setHealth).catch(()=>{});
+    fetch('/api/metrics').then(r=>r.json()).then(setMetrics).catch(()=>{});
+  }, []);
 
   const vectorCount = health?.vectores?.toLocaleString() || '—';
-
-  const stackItems = [
-    ['🖥️','Hetzner VPS Ubuntu 24.04','4GB RAM'],
-    ['⚡','FastAPI + Uvicorn','API REST · puerto 8000'],
-    ['🌐','Nginx','reverse proxy · frontend compilado en dist/'],
-    ['🗄️','ChromaDB','vector store local · persistente en disco'],
-    ['🔢','OpenAI text-embedding-3-small','1536 dimensiones'],
-    ['🤖','GPT-4o-mini','generación de respuestas al ciudadano'],
-    ['✨','GPT-4o','narrativización de tablas en pipeline'],
-    ['💾','SQLite','logs de conversaciones · 21 columnas de métricas'],
-  ];
+  const latMedia = metrics?.latencia_media_ms ? `${metrics.latencia_media_ms}ms` : '—';
 
   const indexNodes = [
-    {icon:'📄',title:'PDFs oficiales de comunidades autónomas'},
-    {icon:'✂️',title:'Extracción de texto con pdfplumber',detail:'página a página'},
-    {icon:'🔤',title:'Normalización del texto'},
-    {icon:'📊',title:'Detección de tablas → texto narrativo',detail:'⚡ Llamada OpenAI GPT-4o'},
-    {icon:'🧩',title:'Chunker',detail:'fragmentos 500 tokens · 50 solapamiento'},
-    {icon:'🔢',title:'Vectorización',detail:'⚡ OpenAI text-embedding-3-small · 1536 dimensiones por chunk'},
-    {icon:'🗄️',title:'ChromaDB almacena vectores + metadatos',detail:`→ ${vectorCount} chunks indexados`},
+    {icon:'📄',title:'PDFs oficiales'},
+    {icon:'✂️',title:'Extracción pdfplumber',detail:'página a página'},
+    {icon:'🔤',title:'Normalización'},
+    {icon:'📊',title:'Detección tablas',detail:'→ texto narrativo'},
+    {icon:'✨',title:'Narrativización',detail:'⚡ GPT-4o'},
+    {icon:'🧩',title:'Chunking',detail:'500t · 50s solapamiento'},
+    {icon:'🔢',title:'Embeddings',detail:'⚡ text-embedding-3-small'},
+    {icon:'🗄️',title:'ChromaDB',detail:`→ ${vectorCount} chunks`},
   ];
 
   const queryNodes = [
-    {icon:'💬',title:'Ciudadano hace una pregunta en lenguaje natural'},
-    {icon:'🔢',title:'Vectorización de la pregunta',detail:'⚡ Llamada OpenAI text-embedding-3-small'},
-    {icon:'🔍',title:'Búsqueda por similitud coseno en ChromaDB',detail:'→ top-6 chunks más relevantes'},
-    {icon:'📝',title:'Construcción del prompt con contexto recuperado'},
-    {icon:'🤖',title:'Generación de respuesta',detail:'⚡ Llamada OpenAI GPT-4o-mini'},
-    {icon:'✅',title:'Respuesta con fuentes citadas al ciudadano',detail:'→ Log automático en SQLite · 21 métricas por consulta'},
+    {icon:'💬',title:'Pregunta ciudadano'},
+    {icon:'🔢',title:'Embedding pregunta',detail:'⚡ text-embedding-3-small'},
+    {icon:'🔍',title:'Búsqueda coseno',detail:'ChromaDB · top-6'},
+    {icon:'📝',title:'Prompt + contexto'},
+    {icon:'🤖',title:'Respuesta',detail:'⚡ GPT-4o-mini'},
+    {icon:'📊',title:'Texto + gráfico'},
+    {icon:'💾',title:'Log SQLite',detail:'22 métricas'},
   ];
 
   return (
     <div style={{animation:'secIn .4s ease both'}}>
-      <div className="glass" style={{borderRadius:'var(--radius)',padding:'24px 28px',marginBottom:24}}>
-        <h2 style={{fontFamily:'Playfair Display,serif',fontSize:'1.3rem',fontWeight:600,marginBottom:20}}>Arquitectura del sistema</h2>
-        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-          {stackItems.map(([ico,name,desc])=>(
-            <div key={name} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 14px',borderRadius:12,background:'rgba(255,255,255,.45)',border:'1px solid rgba(255,255,255,.7)'}}>
-              <span style={{fontSize:18,flexShrink:0,width:28,textAlign:'center'}}>{ico}</span>
-              <span style={{fontWeight:600,fontSize:'.84rem',minWidth:220}}>{name}</span>
-              <span style={{fontSize:'.76rem',color:'var(--text-muted)'}}>{desc}</span>
-            </div>
-          ))}
-        </div>
+      <div className="glass" style={{borderRadius:'var(--radius)',padding:'20px 24px',marginBottom:20}}>
+        <h2 style={{fontFamily:'Playfair Display,serif',fontSize:'1.2rem',fontWeight:600,marginBottom:16}}>Arquitectura del sistema</h2>
+        <ArchitectureSVG/>
       </div>
-      <div className="pipeline-two-col">
-        <PipelineAnimCard
-          color="#007AFF"
-          connColor="#007AFF"
-          title="Pipeline de indexación"
-          subtitle="Preparación del conocimiento"
-          nodes={indexNodes}
-          note="Ejecutado en local — los PDFs grandes requieren más RAM de la disponible en el servidor de producción"
-        />
-        <PipelineAnimCard
-          color="#F59E0B"
-          connColor="#F59E0B"
-          title="Pipeline de consulta"
-          subtitle="Respuesta al ciudadano en tiempo real"
-          nodes={queryNodes}
-          note="Cada consulta genera 21 métricas en SQLite"
-        />
-      </div>
+      <PipelineHorizCard
+        color="#007AFF"
+        title="Pipeline de indexación"
+        subtitle="Preparación del conocimiento — ejecutado en local"
+        nodes={indexNodes}
+        note="Ejecutado en local por limitaciones de RAM del servidor de producción"
+      />
+      <PipelineHorizCard
+        color="#F59E0B"
+        title="Pipeline de consulta"
+        subtitle="Respuesta al ciudadano en tiempo real"
+        nodes={queryNodes}
+        note={`Ejecutado en servidor en cada consulta · latencia media: ${latMedia}`}
+      />
     </div>
   );
 }
@@ -1391,19 +1551,42 @@ function InsightsTab() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [showAllLogs, setShowAllLogs] = useState(false);
+  const plotTemasRef = useRef(null);
 
   useEffect(() => {
     fetch('/api/metrics').then(r=>r.json()).then(d=>{setMetrics(d);setLoading(false);}).catch(()=>setLoading(false));
   }, []);
 
-  const COLORS = ['rgba(0,122,255,.12)','rgba(245,158,11,.12)','rgba(22,163,74,.1)','rgba(139,92,246,.1)','rgba(239,68,68,.08)','rgba(0,122,255,.08)','rgba(245,158,11,.08)','rgba(22,163,74,.07)'];
-  const TC = ['#0057b8','#92400e','#166534','#5b21b6','#991b1b','#0057b8','#92400e','#166534'];
+  useEffect(() => {
+    if (!metrics || !plotTemasRef.current) return;
+    const t = metrics.temas_top || [];
+    if (!t.length) return;
+    const rev = [...t].reverse();
+    window.Plotly?.newPlot(plotTemasRef.current, [{
+      type:'bar', orientation:'h',
+      x:rev.map(i=>i.count), y:rev.map(i=>i.tema),
+      marker:{color:rev.map((_,i)=>{
+        const r=i/Math.max(rev.length-1,1);
+        return `rgba(${Math.round(245*(1-r))},${Math.round(158+r*(122-158))},${Math.round(11+r*244)},0.8)`;
+      })},
+      hovertemplate:'%{x} consultas<extra></extra>',
+    }], {
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+      height:200, margin:{l:100,r:20,t:10,b:30},
+      font:{family:'DM Sans',size:11,color:'#5a5650'},
+      xaxis:{showgrid:true,gridcolor:'rgba(0,0,0,.05)',zeroline:false},
+      yaxis:{showgrid:false,zeroline:false},
+      showlegend:false,
+    }, {responsive:true,displayModeBar:false});
+    return () => { if (plotTemasRef.current && window.Plotly) window.Plotly.purge(plotTemasRef.current); };
+  }, [metrics]);
 
   const getVerdict = (score, pregunta) => {
     const p = (pregunta||'').toLowerCase();
     const fueraDominioKw = ['hora','fecha','cumpleaños','fútbol','clima','predecir'];
     const jailbreakKw = ['mentira','incorrecto','verifica','estás equivocado','ignore','forget','act as'];
-    const sinCoberturaKw = ['valencia','cataluña','país vasco','galicia','navarra','asturias','cantabria','aragón','baleares','canarias','extremadura','la rioja','ceuta','melilla'];
+    const sinCoberturaKw = ['valencia','cataluña','país vasco','galicia','navarra','asturias','cantabria','aragón','baleares','canarias','extremadura','la rioja','murcia','ceuta','melilla'];
     const s = score||0;
     if (jailbreakKw.some(k=>p.includes(k)) && s<40) return {label:'🔓 Jailbreak',style:{background:'rgba(139,92,246,.12)',color:'#5b21b6'}};
     if (fueraDominioKw.some(k=>p.includes(k)) || s<30) return {label:'🚫 Fuera dominio',style:{background:'rgba(239,68,68,.08)',color:'#991b1b'}};
@@ -1439,6 +1622,7 @@ function InsightsTab() {
   ];
 
   const filteredLogs = activeCategory ? logs.filter(e=>getVerdict(e.score_medio,e.pregunta).label===activeCategory) : logs;
+  const visibleLogs = showAllLogs ? filteredLogs : filteredLogs.slice(0,20);
 
   // compute alerts counts from logs
   const now = Date.now();
@@ -1471,7 +1655,7 @@ function InsightsTab() {
         <div className="ins-cat-grid">
           {catDefs.map(c=>(
             <div key={c.label} className={`ins-cat-card glass ${activeCategory===c.label?'active':''}`}
-              style={{background:c.bg}} onClick={()=>setActiveCategory(activeCategory===c.label?null:c.label)}>
+              style={{background:c.bg}} onClick={()=>{setActiveCategory(activeCategory===c.label?null:c.label);setShowAllLogs(false);}}>
               <div className="ins-cat-icon">{c.label.split(' ')[0]}</div>
               <div className="ins-cat-count" style={{color:c.color}}>{catCounts[c.label]||0}</div>
               <div className="ins-cat-label">{c.label.replace(/^[^\s]+ /,'')}</div>
@@ -1480,16 +1664,12 @@ function InsightsTab() {
         </div>
 
         {/* FILA 2 — Temas */}
-        <div className="ins-section-title">Temas detectados</div>
-        <div className="glass" style={{borderRadius:20,padding:'4px 8px'}}>
-          <div className="tag-cloud">
-            {temas.map((t,i)=>(
-              <div key={t.tema} className="tag-bubble" style={{background:COLORS[i%COLORS.length],color:TC[i%TC.length],border:`1px solid ${COLORS[i%COLORS.length].replace('.12','.3').replace('.1','.25').replace('.08','.2')}`,fontSize:`${.7+t.count/maxCount*.4}rem`,padding:`${6+t.count/maxCount*8}px ${12+t.count/maxCount*10}px`,animationDelay:`${i*.25}s`}}>
-                {t.tema}
-              </div>
-            ))}
-            {temas.length===0&&<span style={{color:'var(--text-muted)',fontSize:'.82rem',padding:12}}>Sin datos aún — haz algunas consultas primero</span>}
-          </div>
+        <div className="ins-section-title">Consultas por tema</div>
+        <div className="glass" style={{borderRadius:20,padding:'12px 8px 4px'}}>
+          {temas.length > 0
+            ? <div ref={plotTemasRef} style={{width:'100%'}}/>
+            : <div style={{color:'var(--text-muted)',fontSize:'.82rem',padding:16,textAlign:'center'}}>Sin datos aún — haz algunas consultas primero</div>
+          }
         </div>
 
         {/* FILA 3 — Log con expand */}
@@ -1498,7 +1678,7 @@ function InsightsTab() {
           <table className="eval-table">
             <thead><tr><th>#</th><th>Pregunta</th><th>Similitud</th><th>Categoría</th><th>Hora</th><th></th></tr></thead>
             <tbody>
-              {filteredLogs.map((e,i)=>{
+              {visibleLogs.map((e,i)=>{
                 const sim = e.score_medio||0;
                 const v = getVerdict(sim, e.pregunta);
                 const isOpen = expandedRow===i;
@@ -1526,6 +1706,13 @@ function InsightsTab() {
               {filteredLogs.length===0&&<tr><td colSpan={6} style={{textAlign:'center',color:'var(--text-muted)',padding:16}}>Sin consultas{activeCategory?' en esta categoría':' aún'}</td></tr>}
             </tbody>
           </table>
+          {filteredLogs.length > 20 && (
+            <div style={{padding:'10px 16px',borderTop:'1px solid rgba(0,0,0,.05)',textAlign:'center'}}>
+              <button onClick={()=>setShowAllLogs(v=>!v)} style={{background:'none',border:'1px solid var(--border)',borderRadius:8,padding:'6px 18px',fontSize:'.8rem',color:'var(--blue)',cursor:'pointer',fontFamily:'DM Sans,sans-serif'}}>
+                {showAllLogs ? '▲ Mostrar menos' : `▼ Ver más (${filteredLogs.length - 20} más)`}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* FILA 4 — Alertas con datos reales */}
@@ -1536,7 +1723,7 @@ function InsightsTab() {
             jailbreakCount>0 && {ico:'🔓',text:`${jailbreakCount} intento(s) de jailbreak detectados`,bg:'rgba(139,92,246,.05)',border:'rgba(139,92,246,.15)'},
             sinCobCount>0 && {ico:'📭',text:`${sinCobCount} consulta(s) sin cobertura (documentos no indexados)`,bg:'rgba(107,114,128,.04)',border:'rgba(107,114,128,.12)'},
             simAvg24h && simHist && {ico:parseFloat(simAvg24h)>=parseFloat(simHist)?'📈':'📉',text:`Similitud media últimas 24h: ${simAvg24h}% vs media histórica: ${simHist}%`,bg:'rgba(0,122,255,.03)',border:'rgba(0,122,255,.1)'},
-            leastDoc && {ico:'📄',text:`Documento menos consultado: ${leastDoc[0]} (${leastDoc[1]} consultas)`,bg:'rgba(245,158,11,.04)',border:'rgba(245,158,11,.12)'},
+            alertas.documento_menos_consultado && {ico:'📄',text:`Documento menos consultado: ${alertas.documento_menos_consultado}`,bg:'rgba(245,158,11,.04)',border:'rgba(245,158,11,.12)'},
             alertas.feedbacks_negativos_7d>0 && {ico:'👎',text:`${alertas.feedbacks_negativos_7d} feedback(s) negativo(s) en los últimos 7 días`,bg:'rgba(239,68,68,.05)',border:'rgba(239,68,68,.12)'},
             {ico:'✅',text:'Sistema operativo y respondiendo correctamente',bg:'rgba(22,163,74,.04)',border:'rgba(22,163,74,.12)'},
           ].filter(Boolean).map((a,i)=>(
@@ -1559,7 +1746,7 @@ function App() {
   return (
     <>
       <nav>
-        <div className="nav-logo">🔮 Ecosistema de Cristal</div>
+        <div className="nav-logo">◈ Civitas</div>
         <div className="nav-tabs">
           {tabs.map(t=>(
             <button key={t.id} className={`nav-tab ${activeTab===t.id?'active':''}`} onClick={()=>setActiveTab(t.id)}>

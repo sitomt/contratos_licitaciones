@@ -265,4 +265,5 @@ def main():
     print(f"Total vectores en base de datos: {total}")
 
 
-main()
+if __name__ == "__main__":
+    main()
