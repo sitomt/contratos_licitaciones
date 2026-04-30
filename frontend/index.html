@@ -359,6 +359,7 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 @keyframes springIn{0%{transform:scale(0) translateY(20px);opacity:0}60%{transform:scale(1.08) translateY(-4px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes bubbleIn{0%{opacity:0;transform:scale(0.6) translateY(10px)}60%{transform:scale(1.05) translateY(-3px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes queryPop{0%{opacity:0;transform:translateX(-50%) scale(0.85) translateY(8px)}100%{opacity:1;transform:translateX(-50%) scale(1) translateY(0)}}
 .pn-hp{position:absolute;inset:0;background:#0A0A0F;display:flex;flex-direction:column;overflow-y:auto}
 .pn-hp-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
 .pn-hp-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px 60px;min-height:68vh}
@@ -377,12 +378,8 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 .plan-feat{display:flex;align-items:flex-start;gap:6px;font-size:.78rem;color:var(--text-secondary);padding:3px 0}
 .plan-feat::before{content:'✓';color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px}
 .pn-toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:rgba(18,18,22,.96);color:#fff;padding:12px 18px;border-radius:14px;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);z-index:900;display:flex;align-items:center;gap:12px;font-size:.82rem;animation:fadeUp .3s ease;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.25)}
-.leaflet-container{background:transparent!important}
-.leaflet-tile-pane{display:none!important}
-.leaflet-map-pane{transform:none!important}
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/globe.gl@2.30.0/dist/globe.gl.min.js"></script>
 </head>
 <body>
 
@@ -1883,316 +1880,316 @@ root.render(<App/>);
 
 // ══ PANTALLA 0 — ANIMACIÓN ══
 
-const SPAIN_PATHS = {
-  galicia: "M 80.8,6.3 L 150.8,6.3 L 161.5,44.3 L 134.6,88.6 L 53.8,120.3 L 10.8,69.6 L 26.9,25.3 Z",
-  asturias: "M 150.8,6.3 L 269.2,12.7 L 280.0,50.6 L 215.4,69.6 L 161.5,44.3 Z",
-  cantabria: "M 269.2,12.7 L 339.2,25.3 L 350.0,57.0 L 280.0,50.6 Z",
-  paisvasco: "M 339.2,25.3 L 414.6,25.3 L 420.0,69.6 L 376.9,88.6 L 350.0,57.0 Z",
-  navarra: "M 414.6,25.3 L 473.8,38.0 L 495.4,69.6 L 457.7,126.6 L 403.8,120.3 L 376.9,88.6 L 420.0,69.6 Z",
-  larioja: "M 350.0,57.0 L 376.9,88.6 L 403.8,120.3 L 420.0,145.6 L 350.0,151.9 L 339.2,120.3 Z",
-  aragon: "M 473.8,38.0 L 549.2,69.6 L 565.4,183.5 L 522.3,278.5 L 457.7,259.5 L 430.8,215.2 L 420.0,145.6 L 457.7,126.6 L 495.4,69.6 Z",
-  cataluna: "M 549.2,69.6 L 689.2,88.6 L 689.2,164.6 L 549.2,215.2 L 522.3,278.5 L 565.4,183.5 Z",
-  castillaleon: "M 26.9,25.3 L 53.8,120.3 L 134.6,88.6 L 161.5,44.3 L 150.8,6.3 L 269.2,12.7 L 280.0,50.6 L 350.0,57.0 L 339.2,120.3 L 350.0,151.9 L 420.0,145.6 L 430.8,215.2 L 457.7,259.5 L 376.9,278.5 L 215.4,310.1 L 134.6,341.8 L 107.7,246.8 L 145.4,151.9 L 53.8,120.3 L 10.8,69.6 Z",
-  madrid: "M 323.1,189.9 L 350.0,215.2 L 339.2,246.8 L 296.2,246.8 L 285.4,215.2 Z",
-  extremadura: "M 107.7,246.8 L 215.4,310.1 L 145.4,373.4 L 107.7,405.1 L 16.2,436.7 L 10.8,278.5 L 134.6,246.8 Z",
-  castillamancha: "M 215.4,310.1 L 376.9,278.5 L 457.7,259.5 L 522.3,278.5 L 511.5,341.8 L 457.7,405.1 L 403.8,436.7 L 296.2,436.7 L 269.2,373.4 L 134.6,341.8 Z",
-  comvalenciana: "M 522.3,278.5 L 549.2,215.2 L 527.7,151.9 L 511.5,132.9 L 457.7,126.6 L 457.7,259.5 Z",
-  murcia: "M 457.7,405.1 L 511.5,341.8 L 479.2,398.7 L 452.3,417.7 L 403.8,436.7 Z",
-  andalucia: "M 107.7,405.1 L 145.4,373.4 L 215.4,310.1 L 296.2,436.7 L 403.8,436.7 L 452.3,417.7 L 479.2,398.7 L 511.5,341.8 L 457.7,405.1 L 403.8,500.0 L 226.2,500.0 L 107.7,436.7 L 16.2,436.7 Z",
-};
+function GlobeAnimation({ onDone }) {
+  const globeRef = useRef(null);
+  const globeInstanceRef = useRef(null);
+  const [phase, setPhase] = useState(0);
+  const [showInsights, setShowInsights] = useState(false);
+  const [showTagline, setShowTagline] = useState(false);
+  const [showCta, setShowCta] = useState(false);
+  const [canSkip, setCanSkip] = useState(false);
+  const [logoMoved, setLogoMoved] = useState(false);
+  const [activeQuery, setActiveQuery] = useState(null);
 
-const SPAIN_CENTROIDS = {
-  galicia: [88.5, 51.5],
-  asturias: [215.4, 36.7],
-  cantabria: [309.6, 36.4],
-  paisvasco: [380.2, 53.2],
-  navarra: [434.6, 76.9],
-  larioja: [373.3, 113.9],
-  aragon: [485.8, 154.0],
-  cataluna: [594.1, 166.7],
-  castillaleon: [223.5, 140.8],
-  madrid: [318.8, 222.8],
-  extremadura: [105.4, 328.2],
-  castillamancha: [364.5, 346.2],
-  comvalenciana: [504.4, 194.1],
-  murcia: [460.9, 400.0],
-  andalucia: [294.1, 415.3],
-};
+  const CITIZEN_QUERIES = [
+    { lat: 40.4, lng: -3.7,  label: '¿Cuánto gasta Madrid en Sanidad?',         color: '#F59E0B', size: 0.25 },
+    { lat: 37.5, lng: -4.5,  label: '¿Educación en Andalucía 2024?',             color: '#F59E0B', size: 0.25 },
+    { lat: 41.8, lng: -4.0,  label: '¿Infraestructuras CyL este año?',           color: '#F59E0B', size: 0.25 },
+    { lat: 41.4, lng: 2.2,   label: '¿Presupuesto Cataluña en cultura?',         color: '#F59E0B', size: 0.25 },
+    { lat: 39.5, lng: -0.4,  label: '¿Gasto social Comunitat Valenciana?',       color: '#F59E0B', size: 0.25 },
+    { lat: 43.3, lng: -8.4,  label: '¿Inversión en Galicia en I+D?',             color: '#F59E0B', size: 0.25 },
+    { lat: 37.4, lng: -5.9,  label: '¿Gasto sanitario Sevilla vs Madrid?',       color: '#F59E0B', size: 0.25 },
+    { lat: 43.3, lng: -1.9,  label: '¿Educación País Vasco vs media nacional?',  color: '#F59E0B', size: 0.25 },
+  ];
 
-const INDEXED_COMMUNITIES = new Set(['castillaleon','madrid','andalucia']);
-const ALL_COMMUNITIES = Object.keys(SPAIN_PATHS);
+  const INDEXED_POINTS = [
+    { lat: 37.5, lng: -4.5, label: 'Andalucía',      info: '890 fragmentos · 51.597M€', size: 0.8,  color: '#F59E0B' },
+    { lat: 40.4, lng: -3.7, label: 'Madrid',          info: '93 fragmentos · 24.461M€',  size: 0.6,  color: '#F59E0B' },
+    { lat: 41.8, lng: -4.0, label: 'Castilla y León', info: '638 fragmentos · indexado',  size: 0.7,  color: '#F59E0B' },
+  ];
 
-const RENDER_ORDER = [
-  'castillaleon',
-  'castillamancha',
-  'andalucia',
-  'extremadura',
-  'aragon',
-  'cataluna',
-  'comvalenciana',
-  'navarra',
-  'galicia',
-  'asturias',
-  'murcia',
-  'cantabria',
-  'paisvasco',
-  'larioja',
-  'madrid',
-];
+  const INDEXED_RINGS = [
+    { lat: 37.5, lng: -4.5, color: '#F59E0B', maxR: 4, propagationSpeed: 2, repeatPeriod: 1200 },
+    { lat: 40.4, lng: -3.7, color: '#F59E0B', maxR: 4, propagationSpeed: 2, repeatPeriod: 1200 },
+    { lat: 41.8, lng: -4.0, color: '#F59E0B', maxR: 4, propagationSpeed: 2, repeatPeriod: 1200 },
+  ];
 
-function SpainMap({ litRegions, zoomedRegion, showCard, indexedInfo, mapVisible }) {
-  const mapRef = useRef(null);
-  const leafletRef = useRef(null);
-  const layersRef = useRef({});
+  const ARCS = [
+    { startLat: 41.4, startLng: 2.2,  endLat: 37.5, endLng: -4.5, color: ['rgba(245,158,11,0.8)', 'rgba(245,158,11,0)'] },
+    { startLat: 39.5, startLng: -0.4, endLat: 40.4, endLng: -3.7, color: ['rgba(245,158,11,0.8)', 'rgba(245,158,11,0)'] },
+    { startLat: 43.3, startLng: -8.4, endLat: 41.8, endLng: -4.0, color: ['rgba(245,158,11,0.8)', 'rgba(245,158,11,0)'] },
+    { startLat: 37.4, startLng: -5.9, endLat: 37.5, endLng: -4.5, color: ['rgba(96,165,250,0.7)',  'rgba(96,165,250,0)']  },
+    { startLat: 43.3, startLng: -1.9, endLat: 40.4, endLng: -3.7, color: ['rgba(167,139,250,0.7)', 'rgba(167,139,250,0)'] },
+  ];
 
   useEffect(() => {
-    if (!mapRef.current || leafletRef.current) return;
+    if (!globeRef.current) return;
 
-    const map = L.map(mapRef.current, {
-      center: [40.2, -3.0],
-      zoom: 5.8,
-      zoomControl: false,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
+    const globe = Globe()
+      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+      .backgroundImageUrl(null)
+      .backgroundColor('rgba(0,0,0,0)')
+      .atmosphereColor('#F59E0B')
+      .atmosphereAltitude(0.15)
+      .pointsData([])
+      .pointAltitude(0.0)
+      .pointColor('color')
+      .pointRadius(0.25)
+      .pointResolution(6)
+      .pointsMerge(false)
+      .pointLabel(d => `
+        <div style="
+          background:rgba(15,15,20,0.92);
+          border:1px solid rgba(245,158,11,0.4);
+          border-radius:12px;
+          padding:10px 16px;
+          font-family:DM Sans,sans-serif;
+          color:#fff;
+          min-width:180px;
+        ">
+          <div style="font-family:Playfair Display,serif;font-size:1rem;font-weight:700;margin-bottom:6px;color:#F59E0B">
+            ${d.label}
+          </div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,0.7)">${d.info}</div>
+        </div>
+      `)
+      .ringsData([])
+      .ringColor(() => t => `rgba(245,158,11,${Math.sqrt(1 - t)})`)
+      .ringMaxRadius(3)
+      .ringPropagationSpeed(1.2)
+      .ringRepeatPeriod(1800)
+      .arcsData([])
+      .arcColor('color')
+      .arcAltitude(0.15)
+      .arcStroke(0.3)
+      .arcDashLength(0.25)
+      .arcDashGap(0.08)
+      .arcDashAnimateTime(800)
+      (globeRef.current);
+
+    globeInstanceRef.current = globe;
+    globe.width(globeRef.current.clientWidth);
+    globe.height(globeRef.current.clientHeight);
+
+    // ACT 1 — Atlantic view, auto-rotate
+    globe.pointOfView({ lat: 25, lng: -15, altitude: 2.2 }, 0);
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.4;
+    globe.controls().enableZoom = false;
+    globe.controls().enablePan = false;
+    globe.controls().enableRotate = false;
+
+    const ts = [];
+    const t = (ms, fn) => ts.push(setTimeout(fn, ms));
+
+    t(400,  () => setPhase(1));
+    t(1500, () => setLogoMoved(true));
+    t(3000, () => setCanSkip(true));
+
+    // ACT 2 — Zoom into Spain
+    t(2200, () => {
+      globe.controls().autoRotate = false;
+      globe.pointOfView({ lat: 40.0, lng: -3.5, altitude: 0.75 }, 2500);
     });
-    leafletRef.current = map;
-    window._civitasMap = map;
 
-    const NAME_TO_ID = {
-      'Andalucía': 'andalucia',
-      'Aragón': 'aragon',
-      'Asturias': 'asturias',
-      'Baleares': 'baleares',
-      'Canarias': 'canarias',
-      'Cantabria': 'cantabria',
-      'Castilla-La Mancha': 'castillamancha',
-      'Castilla y León': 'castillaleon',
-      'Cataluña': 'cataluna',
-      'Extremadura': 'extremadura',
-      'Galicia': 'galicia',
-      'La Rioja': 'larioja',
-      'Madrid': 'madrid',
-      'Murcia': 'murcia',
-      'Navarra': 'navarra',
-      'País Vasco': 'paisvasco',
-      'Comunidad Valenciana': 'comvalenciana',
-      'Ceuta': 'ceuta',
-      'Melilla': 'melilla',
+    // ACT 3 — Citizen queries appear staggered + rings on indexed
+    t(5200, () => {
+      globe.pointsData([...CITIZEN_QUERIES, ...INDEXED_POINTS]);
+      setPhase(2);
+      CITIZEN_QUERIES.forEach((q, i) => {
+        ts.push(setTimeout(() => setActiveQuery(q), i * 600));
+      });
+    });
+    t(5400, () => globe.ringsData(INDEXED_RINGS));
+
+    // ACT 4 — Civitas connects with arcs + insights panel + slight zoom out
+    t(7200, () => {
+      globe.arcsData(ARCS);
+      setShowInsights(true);
+    });
+    t(7500, () => globe.pointOfView({ lat: 38.5, lng: -3.5, altitude: 0.95 }, 2000));
+
+    // ACT 5 — Tagline & CTA
+    t(9200, () => {
+      setShowInsights(false);
+      if (globeInstanceRef.current) {
+        globeInstanceRef.current.pointsData([]);
+        globeInstanceRef.current.arcsData([]);
+        globeInstanceRef.current.ringsData([]);
+      }
+      globe.pointOfView({ lat: 35.0, lng: -10.0, altitude: 2.0 }, 2500);
+      globe.controls().autoRotate = true;
+      globe.controls().autoRotateSpeed = 0.3;
+    });
+    t(9800,  () => setShowTagline(true));
+    t(10800, () => setShowCta(true));
+
+    return () => {
+      ts.forEach(clearTimeout);
+      if (globeInstanceRef.current) {
+        globeInstanceRef.current._destructor?.();
+      }
     };
-
-    fetch('https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-communities.geojson')
-      .then(r => r.json())
-      .then(data => {
-        const INDEXED = new Set(['andalucia','castillaleon','madrid']);
-        data.features.forEach(feature => {
-          const name = feature.properties.name;
-          const id = NAME_TO_ID[name] || name.toLowerCase();
-          const isIndexed = INDEXED.has(id);
-          const layer = L.geoJSON(feature, {
-            style: {
-              fillColor: isIndexed ? '#F59E0B' : '#e8e8e8',
-              fillOpacity: isIndexed ? 0.08 : 0.04,
-              color: isIndexed ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.25)',
-              weight: 0.6,
-            }
-          }).addTo(map);
-          layersRef.current[id] = { layer, isIndexed };
-        });
-      })
-      .catch(console.error);
-
-    return () => { map.remove(); leafletRef.current = null; };
   }, []);
 
   useEffect(() => {
-    Object.entries(layersRef.current).forEach(([id, { layer, isIndexed }]) => {
-      const isLit = litRegions.has(id);
-      const isZoomed = zoomedRegion === id;
-      const baseStyle = {
-        fillColor: isIndexed ? '#F59E0B' : '#e8e8e8',
-        color: isIndexed && isLit ? 'rgba(245,158,11,0.9)' : 'rgba(255,255,255,0.25)',
-        weight: isZoomed ? 2.5 : isLit ? 1.2 : 0.6,
-      };
-      if (isLit && isIndexed) {
-        const w = isZoomed ? 2.5 : 1.8;
-        layer.setStyle({ fillColor:'#F59E0B', color:'rgba(245,158,11,0.8)', weight:w, fillOpacity:0.6 });
-        setTimeout(() => layer.setStyle({ fillOpacity:0.3 }), 300);
-        setTimeout(() => layer.setStyle({ fillOpacity:0.45 }), 600);
-        setTimeout(() => layer.setStyle({ fillOpacity:0.35 }), 900);
-      } else if (isLit) {
-        layer.setStyle({ fillColor:'#ffffff', fillOpacity:0.1, color:'rgba(255,255,255,0.3)', weight:0.8 });
-      } else {
-        layer.setStyle({ ...baseStyle, fillOpacity: isIndexed ? 0.08 : 0.04 });
+    const handleResize = () => {
+      if (globeInstanceRef.current && globeRef.current) {
+        globeInstanceRef.current.width(globeRef.current.clientWidth);
+        globeInstanceRef.current.height(globeRef.current.clientHeight);
       }
-    });
-  }, [litRegions, zoomedRegion]);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div style={{
-      position:'relative',
-      width:'min(620px,72vw)',
-      height:'min(420px,48vw)',
-      filter:'drop-shadow(0 40px 80px rgba(0,0,0,0.8))',
-      opacity: mapVisible ? 1 : 0,
-      transform: mapVisible
-        ? 'perspective(900px) rotateX(18deg) rotateZ(-1.5deg) scale(1)'
-        : 'perspective(900px) rotateX(18deg) rotateZ(-1.5deg) scale(0.85)',
-      transition: 'opacity 1.2s ease, transform 1.2s cubic-bezier(0.22,1,0.36,1)',
+      position:'absolute', inset:0,
+      background:'#0A0A0F',
+      display:'flex', flexDirection:'column',
+      alignItems:'center', justifyContent:'center',
+      overflow:'hidden',
     }}>
+      {/* Background blobs */}
+      <div style={{position:'absolute',top:-100,right:-100,width:500,height:500,borderRadius:'50%',background:'rgba(245,158,11,0.06)',filter:'blur(120px)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',bottom:-100,left:-100,width:500,height:500,borderRadius:'50%',background:'rgba(0,122,255,0.06)',filter:'blur(120px)',pointerEvents:'none'}}/>
+
+      {/* Globe */}
       <div
-        ref={mapRef}
+        ref={globeRef}
         style={{
-          width:'100%',
-          height:'100%',
-          background:'transparent',
-          overflow:'visible',
+          position:'absolute', inset:0,
+          opacity: phase >= 1 ? 1 : 0,
+          transition:'opacity 1.5s ease',
         }}
       />
-      {showCard && (
-        <div style={{
-          position:'absolute',
-          top:'38%',
-          left:'52%',
-          zIndex:1000,
-          animation:'bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
-          pointerEvents:'none',
-        }}>
-          <svg style={{position:'absolute',top:-40,left:-60,width:80,height:50,overflow:'visible',pointerEvents:'none'}}>
-            <line x1="60" y1="50" x2="60" y2="8" stroke="rgba(245,158,11,0.6)" strokeWidth="1.5" strokeDasharray="4 3"/>
-            <circle cx="60" cy="50" r="4" fill="#F59E0B" style={{animation:'dotPulse 1s infinite'}}/>
-          </svg>
-          <div style={{
-            background:'rgba(15,15,20,0.92)',
-            backdropFilter:'blur(24px)',
-            border:'1px solid rgba(245,158,11,0.3)',
-            borderRadius:16,
-            padding:'16px 20px',
-            minWidth:220,
-            boxShadow:'0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.1)',
-          }}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
-              <div style={{width:8,height:8,borderRadius:'50%',background:'#F59E0B',boxShadow:'0 0 8px #F59E0B',animation:'dotPulse 1.5s infinite'}}/>
-              <span style={{color:'#fff',fontWeight:700,fontSize:'.9rem',fontFamily:'Playfair Display,serif',letterSpacing:'.02em'}}>Madrid</span>
-              <span style={{marginLeft:'auto',fontSize:'.65rem',color:'rgba(245,158,11,0.8)',fontWeight:600,background:'rgba(245,158,11,0.1)',padding:'2px 8px',borderRadius:99,border:'1px solid rgba(245,158,11,0.2)'}}>INDEXADO</span>
-            </div>
-            {[
-              {label:'Fragmentos indexados',value:'93',unit:'chunks'},
-              {label:'Presupuesto 2026',value:'24.461',unit:'M€'},
-              {label:'Similitud media',value:'71.4',unit:'%'},
-              {label:'Documentos',value:'2',unit:'PDFs oficiales'},
-            ].map(({label,value,unit})=>(
-              <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
-                <span style={{fontSize:'.72rem',color:'rgba(255,255,255,0.5)',lineHeight:1.3,maxWidth:120}}>{label}</span>
-                <div style={{textAlign:'right',flexShrink:0}}>
-                  <span style={{fontSize:'.95rem',fontWeight:700,color:'#F59E0B',fontFamily:'Playfair Display,serif'}}>{value}</span>
-                  <span style={{fontSize:'.62rem',color:'rgba(255,255,255,0.4)',marginLeft:4}}>{unit}</span>
-                </div>
-              </div>
-            ))}
-            <div style={{marginTop:10,fontSize:'.68rem',color:'rgba(255,255,255,0.3)',textAlign:'center',lineHeight:1.4}}>
-              Presupuestos Generales Madrid 2026
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PantallaAnimacion({ onDone }) {
-  const [logoPhase, setLogoPhase] = useState(0);
-  const [logoMoved, setLogoMoved] = useState(false);
-  const [mapVisible, setMapVisible] = useState(false);
-  const [canSkip, setCanSkip] = useState(false);
-  const [litRegions, setLitRegions] = useState(new Set());
-  const [zoomedRegion, setZoomedRegion] = useState(null);
-  const [showCard, setShowCard] = useState(false);
-  const [showTagline, setShowTagline] = useState(false);
-  const [showCta, setShowCta] = useState(false);
-
-  useEffect(() => {
-    const ts = [];
-    const t = (ms, fn) => ts.push(setTimeout(fn, ms));
-    t(300,  () => setLogoPhase(1));
-    t(1800, () => { setLogoPhase(2); setLogoMoved(true); });
-    t(2200, () => setMapVisible(true));
-    t(3000, () => setCanSkip(true));
-    const litOrder = ['galicia','asturias','cantabria','paisvasco',
-      'navarra','larioja','aragon','cataluna','castillaleon',
-      'madrid','extremadura','castillamancha','comvalenciana',
-      'murcia','andalucia'];
-    litOrder.forEach((r,i) => t(3200+i*120, () => setLitRegions(prev=>{ const s=new Set(prev); s.add(r); return s; })));
-    t(5000, () => {
-      if (window._civitasMap) {
-        window._civitasMap.flyTo([40.0, -3.8], 6.2, { animate:true, duration:1.8, easeLinearity:0.1 });
-      }
-    });
-    t(5500, () => {
-      setZoomedRegion('madrid');
-      if (window._civitasMap) {
-        window._civitasMap.flyTo([40.4, -3.7], 7.5, { animate:true, duration:2.0, easeLinearity:0.05 });
-      }
-    });
-    t(6200, () => setShowCard(true));
-    t(8500, () => {
-      setShowCard(false);
-      setZoomedRegion(null);
-      if (window._civitasMap) {
-        window._civitasMap.flyTo([40.2, -3.0], 5.8, { animate:true, duration:2.5, easeLinearity:0.1 });
-      }
-    });
-    t(9500, () => setShowTagline(true));
-    t(10500, () => setShowCta(true));
-    return () => ts.forEach(clearTimeout);
-  }, []);
-
-  return (
-    <div style={{position:'absolute',inset:0,background:'#0A0A0F',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-      <div style={{position:'absolute',top:-80,right:-80,width:420,height:420,borderRadius:'50%',background:'rgba(245,158,11,.08)',filter:'blur(120px)',pointerEvents:'none'}}/>
-      <div style={{position:'absolute',bottom:-80,left:-80,width:420,height:420,borderRadius:'50%',background:'rgba(0,122,255,.08)',filter:'blur(120px)',pointerEvents:'none'}}/>
 
       {/* Logo */}
       <div style={{
         position:'absolute',
-        top: logoMoved ? '24px' : '50%',
-        left: logoMoved ? '32px' : '50%',
-        transform: logoMoved ? 'translate(0,0) scale(0.75)' : 'translate(-50%,-50%) scale(1.4)',
-        opacity: logoPhase >= 1 ? (logoMoved ? 0.9 : 1) : 0,
-        transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
-        zIndex:10,display:'flex',flexDirection:'column',alignItems:'center',gap:10
+        top: logoMoved ? 24 : '50%',
+        left: logoMoved ? 32 : '50%',
+        transform: logoMoved
+          ? 'translate(0,0) scale(0.8)'
+          : 'translate(-50%,-50%) scale(1.4)',
+        transition:'all 0.8s cubic-bezier(0.22,1,0.36,1)',
+        zIndex:10,
+        display:'flex',
+        flexDirection:'column',
+        alignItems: logoMoved ? 'flex-start' : 'center',
+        gap:8,
+        opacity: phase >= 1 ? 1 : 0,
       }}>
-        <div style={{display:'flex',alignItems:'center',gap:14}}>
-          <CivitasLogo size={52}/>
-          <span style={{fontFamily:'Playfair Display,serif',fontSize:'2.4rem',fontWeight:700,color:'#fff',letterSpacing:'.15em'}}>CIVITAS</span>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <CivitasLogo size={logoMoved ? 28 : 48}/>
+          <span style={{
+            fontFamily:'Playfair Display,serif',
+            fontSize: logoMoved ? '1rem' : '2.2rem',
+            fontWeight:700, color:'#fff',
+            letterSpacing:'.12em',
+            transition:'font-size 0.8s ease',
+          }}>CIVITAS</span>
         </div>
-        <div style={{width:40,height:1.5,background:'#F59E0B',borderRadius:1}}/>
+        {!logoMoved && (
+          <div style={{width:40,height:1.5,background:'#F59E0B',borderRadius:1}}/>
+        )}
       </div>
 
-      {/* Spain map */}
-      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',paddingTop:60,overflow:'hidden'}}>
-        <SpainMap
-          litRegions={litRegions}
-          zoomedRegion={zoomedRegion}
-          showCard={showCard}
-          indexedInfo={INDEXED_INFO}
-          mapVisible={mapVisible}
-        />
-      </div>
+      {/* Active query floating bubble */}
+      {activeQuery && (
+        <div key={activeQuery.label} style={{
+          position:'absolute',
+          bottom:'28%',
+          left:'50%',
+          transform:'translateX(-50%)',
+          zIndex:20,
+          animation:'queryPop 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+          background:'rgba(15,15,20,0.88)',
+          backdropFilter:'blur(20px)',
+          border:`1px solid ${activeQuery.color}44`,
+          borderRadius:99,
+          padding:'10px 20px',
+          fontFamily:'DM Sans,sans-serif',
+          fontSize:'.88rem',
+          color:'rgba(255,255,255,0.85)',
+          whiteSpace:'nowrap',
+          boxShadow:`0 4px 24px ${activeQuery.color}22`,
+        }}>
+          <span style={{color:activeQuery.color,marginRight:8}}>●</span>
+          {activeQuery.label}
+        </div>
+      )}
+
+      {/* Insights panel */}
+      {showInsights && (
+        <div style={{
+          position:'absolute',
+          top:'18%', right:'6%',
+          zIndex:20,
+          animation:'bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+          background:'rgba(15,15,20,0.92)',
+          backdropFilter:'blur(24px)',
+          border:'1px solid rgba(245,158,11,0.3)',
+          borderRadius:16,
+          padding:'18px 22px',
+          minWidth:230,
+          boxShadow:'0 8px 40px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{fontSize:'.68rem',fontWeight:700,color:'rgba(245,158,11,0.8)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:12,fontFamily:'DM Sans,sans-serif'}}>
+            Civitas en acción
+          </div>
+          {[
+            { label:'Consulta',       value:'Sanidad · Madrid',  sub:null },
+            { label:'Fragmentos RAG', value:'43',                sub:'recuperados' },
+            { label:'Latencia',       value:'1.2s',              sub:'extremo a extremo' },
+            { label:'Coherencia',     value:'87.4%',             sub:'score semántico' },
+            { label:'Coste',          value:'€0.0014',           sub:'por consulta' },
+          ].map(({label,value,sub}) => (
+            <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div>
+                <div style={{fontSize:'.72rem',color:'rgba(255,255,255,0.45)',fontFamily:'DM Sans,sans-serif'}}>{label}</div>
+                {sub && <div style={{fontSize:'.62rem',color:'rgba(255,255,255,0.28)',fontFamily:'DM Sans,sans-serif'}}>{sub}</div>}
+              </div>
+              <div style={{fontSize:'.9rem',fontWeight:700,color:'#F59E0B',fontFamily:'Playfair Display,serif',textAlign:'right'}}>{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tagline */}
       {showTagline && (
-        <div style={{position:'absolute',bottom:'18%',left:0,right:0,textAlign:'center',color:'rgba(255,255,255,.7)',fontFamily:'DM Sans,sans-serif',fontSize:'1.1rem',animation:'fadeUp .6s ease'}}>
-          El gasto público español, en lenguaje humano.
+        <div style={{
+          position:'absolute', bottom:'18%',
+          left:0, right:0, textAlign:'center',
+          animation:'fadeUp 0.6s ease',
+          zIndex:10,
+        }}>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:'1.1rem',color:'rgba(255,255,255,0.7)'}}>
+            El gasto público español, en lenguaje humano.
+          </div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:'.85rem',color:'rgba(255,255,255,0.35)',marginTop:6}}>
+            Pregunta. Compara. Entiende.
+          </div>
         </div>
       )}
 
       {/* CTA */}
       {showCta && (
-        <div style={{position:'absolute',bottom:'8%',left:0,right:0,textAlign:'center',animation:'springIn .6s cubic-bezier(.34,1.56,.64,1)'}}>
-          <button onClick={onDone} style={{padding:'14px 36px',borderRadius:99,background:'#F59E0B',color:'#fff',border:'none',fontFamily:'DM Sans,sans-serif',fontSize:'1rem',fontWeight:500,cursor:'none',boxShadow:'0 4px 20px rgba(245,158,11,.4)'}}>
+        <div style={{
+          position:'absolute', bottom:'8%',
+          left:0, right:0, textAlign:'center',
+          animation:'springIn 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+          zIndex:10,
+        }}>
+          <button onClick={onDone} style={{
+            padding:'14px 36px', borderRadius:99,
+            background:'#F59E0B', color:'#fff',
+            border:'none', fontFamily:'DM Sans,sans-serif',
+            fontSize:'1rem', fontWeight:500,
+            cursor:'none',
+            boxShadow:'0 4px 20px rgba(245,158,11,0.4)',
+          }}>
             Explorar Civitas →
           </button>
         </div>
@@ -2200,8 +2197,15 @@ function PantallaAnimacion({ onDone }) {
 
       {/* Skip */}
       {canSkip && !showCta && (
-        <div style={{position:'absolute',bottom:24,right:24,animation:'fadeUp .4s ease'}}>
-          <button onClick={onDone} style={{background:'none',border:'1px solid rgba(255,255,255,.2)',color:'rgba(255,255,255,.5)',padding:'8px 16px',borderRadius:99,fontFamily:'DM Sans,sans-serif',fontSize:'.78rem',cursor:'none'}}>Saltar →</button>
+        <div style={{position:'absolute',bottom:24,right:24,zIndex:20,animation:'fadeUp 0.4s ease'}}>
+          <button onClick={onDone} style={{
+            background:'none',
+            border:'1px solid rgba(255,255,255,0.2)',
+            color:'rgba(255,255,255,0.5)',
+            padding:'8px 16px', borderRadius:99,
+            fontFamily:'DM Sans,sans-serif',
+            fontSize:'.78rem', cursor:'none',
+          }}>Saltar →</button>
         </div>
       )}
     </div>
@@ -2379,7 +2383,7 @@ function ScreenManager() {
 
   return (
     <div style={{position:'absolute',inset:0,opacity:fading?0:1,transition:'opacity .4s',pointerEvents:fading?'none':'all'}}>
-      {pantalla==='animacion' && <PantallaAnimacion onDone={()=>goTo('homepage')}/>}
+      {pantalla==='animacion' && <GlobeAnimation onDone={()=>goTo('homepage')}/>}
       {pantalla==='homepage' && <PantallaHomepage onGoPlanes={()=>goTo('planes')} onGoApp={goApp}/>}
       {pantalla==='planes' && <PantallaPlanes onBack={()=>goTo('homepage')} onGoApp={goApp}/>}
     </div>
