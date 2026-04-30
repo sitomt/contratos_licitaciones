@@ -168,7 +168,7 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 .comp-card p.comp-short{font-size:.82rem;color:var(--text-secondary);line-height:1.6;text-align:center}
 .comp-badge{display:inline-block;margin-top:14px;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:500}
 .comp-expand-content{overflow:hidden;max-height:0;opacity:0;transition:max-height .5s cubic-bezier(.22,1,.36,1),opacity .4s ease;margin-top:0}
-.comp-expand-content.open{max-height:600px;opacity:1;margin-top:20px}
+.comp-expand-content.open{max-height:2400px;opacity:1;margin-top:20px}
 .comp-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.06);border:none;cursor:none;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .comp-close:hover{background:rgba(0,0,0,.12)}
 .comp-list li{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(0,0,0,.04)}
@@ -337,8 +337,6 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 .pipe-connector{width:2px;height:16px;margin-left:15px;border-radius:1px;opacity:0;transition:opacity .3s}
 .pipe-connector.revealed{opacity:1}
 .pipe-note{font-size:.72rem;color:var(--text-muted);padding:10px 12px;border-radius:8px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);line-height:1.5;margin-top:12px}
-.pipe-replay-btn{margin-top:12px;padding:7px 16px;border-radius:99px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);font-size:.75rem;font-family:'DM Sans',sans-serif;cursor:none;transition:all .2s;align-self:center;color:var(--text-secondary)}
-.pipe-replay-btn:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--text-primary)}
 /* Insights redesign */
 .ins-total{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:600;text-align:center;margin-bottom:8px}
 .ins-total-sub{font-size:.82rem;color:var(--text-muted);text-align:center;margin-bottom:28px}
@@ -353,7 +351,38 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
 .eval-expand-row td{background:rgba(255,255,255,.5);padding:12px 16px;font-size:.78rem;color:var(--text-secondary);line-height:1.6}
 /* Striped comp table */
 .comp-table-striped tr:nth-child(even) td{background:rgba(0,0,0,.025)}
+
+/* ── NEW SCREENS OVERLAY ── */
+#civitas-overlay{position:fixed;inset:0;z-index:700;background:#0A0A0F;overflow:hidden}
+@keyframes mapPathDraw{from{stroke-dashoffset:2000;opacity:.12}to{stroke-dashoffset:0;opacity:1}}
+@keyframes dotPulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes springIn{0%{transform:scale(0) translateY(20px);opacity:0}60%{transform:scale(1.08) translateY(-4px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bubbleIn{0%{opacity:0;transform:scale(0.6) translateY(10px)}60%{transform:scale(1.05) translateY(-3px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+.pn-hp{position:absolute;inset:0;background:#0A0A0F;display:flex;flex-direction:column;overflow-y:auto}
+.pn-hp-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;background:rgba(10,10,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
+.pn-hp-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px 60px;min-height:68vh}
+.pn-stats{display:flex;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+.pn-stat{flex:1;padding:30px 20px;text-align:center;border-right:1px solid rgba(255,255,255,.08)}
+.pn-stat:last-child{border-right:none}
+.pn-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:50px 40px;max-width:1000px;margin:0 auto;width:100%;box-sizing:border-box}
+.pn-step{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;backdrop-filter:blur(12px)}
+.pn-hp-footer{padding:22px 40px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+.pn-pl{position:absolute;inset:0;background:var(--cream);display:flex;flex-direction:column;overflow-y:auto}
+.pn-pl-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(248,247,244,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,.07)}
+.planes-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:0 32px 32px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box}
+@media(max-width:900px){.planes-grid{grid-template-columns:repeat(2,1fr)}.pn-steps{grid-template-columns:1fr}}
+.plan-card{background:rgba(255,255,255,.65);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.8);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
+.plan-card.featured{border-color:rgba(245,158,11,.4);box-shadow:0 8px 32px rgba(245,158,11,.1)}
+.plan-feat{display:flex;align-items:flex-start;gap:6px;font-size:.78rem;color:var(--text-secondary);padding:3px 0}
+.plan-feat::before{content:'✓';color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px}
+.pn-toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:rgba(18,18,22,.96);color:#fff;padding:12px 18px;border-radius:14px;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);z-index:900;display:flex;align-items:center;gap:12px;font-size:.82rem;animation:fadeUp .3s ease;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.leaflet-container{background:transparent!important}
+.leaflet-tile-pane{display:none!important}
+.leaflet-map-pane{transform:none!important}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -362,6 +391,9 @@ nav{position:relative;z-index:100;height:64px;display:flex;align-items:center;ju
   <div class="blob blob-blue" id="blobBlue"></div>
   <div class="blob blob-amber" id="blobAmber"></div>
 </div>
+
+<!-- New screens overlay -->
+<div id="civitas-overlay"></div>
 
 <!-- Homepage -->
 <div id="homepage">
@@ -817,24 +849,47 @@ const COMP_DATA = [
   {
     icon:'🏛️', bg:'rgba(22,163,74,.07)', badge:'Fuentes oficiales', badgeStyle:{background:'rgba(22,163,74,.08)',color:'#166534'},
     title:'Fuentes de información',
-    short:'Presupuestos oficiales de Andalucía, Castilla y León y Comunidad de Madrid — indexados y disponibles en el chat.',
+    short:'Documentos públicos oficiales publicados por las administraciones españolas — trazables y verificables en origen.',
     expandContent: () => (
       <div>
-        {[
-          ['📄','Andalucía 2026','Junta de Andalucía','presupuesto.juntadeandalucia.es'],
-          ['📄','Castilla y León 2026','Junta de CyL','hacienda.jcyl.es'],
-          ['📄','Madrid 2026 (presupuesto)','Comunidad de Madrid','presupuestos.comunidad.madrid'],
-          ['📄','Madrid 2026 (resumen)','Comunidad de Madrid','presupuestos.comunidad.madrid'],
-        ].map(([ico,nom,org,url])=>(
-          <div key={nom} style={{padding:'10px 0',borderBottom:'1px solid rgba(0,0,0,.05)',display:'flex',gap:10,alignItems:'flex-start'}}>
-            <span>{ico}</span>
-            <div>
-              <div style={{fontWeight:600,fontSize:'.82rem'}}>{nom}</div>
-              <div style={{fontSize:'.72rem',color:'var(--text-muted)',marginTop:2}}>{org}</div>
-              <div style={{fontSize:'.7rem',color:'var(--blue)',marginTop:2}}>{url}</div>
-            </div>
-          </div>
-        ))}
+        <p style={{fontSize:'.81rem',color:'var(--text-secondary)',lineHeight:1.65,marginBottom:16}}>
+          Civitas indexa exclusivamente documentos públicos oficiales publicados por las administraciones españolas. Toda la información es trazable y verificable en origen.
+        </p>
+        <div style={{fontSize:'.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-muted)',marginBottom:8}}>Fuentes activas</div>
+        <ul style={{listStyle:'none',padding:0,margin:'0 0 20px'}}>
+          {[
+            'Presupuestos Generales de Comunidades Autónomas (publicados anualmente por cada gobierno autonómico)',
+            'Documentos del Ministerio de Hacienda y Función Pública',
+            'Boletines Oficiales de las Comunidades Autónomas (BOCA, BOCM, etc.)',
+            'Resúmenes ejecutivos de ejecución presupuestaria',
+          ].map(t=>(
+            <li key={t} style={{display:'flex',gap:8,alignItems:'flex-start',padding:'6px 0',borderBottom:'1px solid rgba(0,0,0,.04)'}}>
+              <span style={{color:'#22c55e',flexShrink:0,marginTop:1,fontSize:10}}>▸</span>
+              <span style={{fontSize:'.79rem',color:'var(--text-secondary)',lineHeight:1.5}}>{t}</span>
+            </li>
+          ))}
+        </ul>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+          <div style={{fontSize:'.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--text-muted)'}}>En proceso de integración</div>
+          <span style={{padding:'2px 8px',borderRadius:99,background:'rgba(245,158,11,.1)',color:'#92400e',fontSize:'.65rem',fontWeight:700,letterSpacing:'.05em'}}>PRÓXIMAMENTE</span>
+        </div>
+        <ul style={{listStyle:'none',padding:0,margin:'0 0 16px'}}>
+          {[
+            'Contratos públicos del Registro PLACE (Plataforma de Contratación del Sector Público) — licitaciones y adjudicaciones',
+            'Informes de la AIReF (Autoridad Independiente de Responsabilidad Fiscal) — evaluaciones de sostenibilidad',
+            'Datos de ejecución presupuestaria trimestral del Estado',
+            'Presupuestos municipales de los 50 mayores ayuntamientos',
+            'Informes del Tribunal de Cuentas — auditorías del gasto público',
+          ].map(t=>(
+            <li key={t} style={{display:'flex',gap:8,alignItems:'flex-start',padding:'6px 0',borderBottom:'1px solid rgba(0,0,0,.04)',opacity:.75}}>
+              <span style={{color:'#F59E0B',flexShrink:0,marginTop:1,fontSize:10}}>◆</span>
+              <span style={{fontSize:'.79rem',color:'var(--text-secondary)',lineHeight:1.5}}>{t}</span>
+            </li>
+          ))}
+        </ul>
+        <p style={{fontSize:'.69rem',color:'var(--text-muted)',lineHeight:1.55,padding:'8px 10px',background:'rgba(0,0,0,.025)',borderRadius:8}}>
+          Civitas está en fase de expansión continua de su base de conocimiento. Los documentos se verifican antes de ser indexados.
+        </p>
       </div>
     )
   }
@@ -1198,92 +1253,113 @@ function PipelineAnimCard({color, title, subtitle, nodes, note, connColor}) {
 }
 
 function ArchitectureSVG() {
-  const [tip, setTip] = useState(null);
-  const nodes = [
-    {id:'browser',x:10,y:88,w:100,h:44,emoji:'🌐',label:'Navegador',color:'#F59E0B',desc:'React SPA · interface del ciudadano',ext:true},
-    {id:'nginx',x:188,y:88,w:88,h:44,emoji:'🔀',label:'Nginx',color:'#22c55e',desc:'Reverse proxy · Puerto 80 · Frontend en dist/'},
-    {id:'fastapi',x:316,y:88,w:88,h:44,emoji:'⚡',label:'FastAPI',color:'#007AFF',desc:'API REST · Puerto 8000 · 9 endpoints'},
-    {id:'chromadb',x:444,y:46,w:96,h:44,emoji:'🗄️',label:'ChromaDB',color:'#8b5cf6',desc:'Vector store local · 1.621 embeddings · Búsqueda coseno'},
-    {id:'sqlite',x:444,y:130,w:96,h:44,emoji:'💾',label:'SQLite',color:'#F59E0B',desc:'Logs · conversaciones.db · 22 columnas por consulta'},
-    {id:'openai',x:592,y:88,w:102,h:44,emoji:'🤖',label:'OpenAI API',color:'#22c55e',desc:'GPT-4o-mini · GPT-4o · text-embedding-3-small',ext:true},
-  ];
+  const F = 'DM Sans,sans-serif';
   return (
-    <div style={{position:'relative'}}>
-      <svg viewBox="0 0 720 210" style={{width:'100%',height:'auto',display:'block'}}>
+    <div style={{width:'100%',overflowX:'auto'}}>
+      <svg viewBox="0 0 820 240" style={{width:'100%',height:'auto',display:'block',minWidth:580}}>
         <defs>
-          {[['amber','#F59E0B'],['green','#22c55e'],['purple','#8b5cf6'],['blue','#007AFF']].map(([n,c])=>(
-            <marker key={n} id={`arr-${n}`} markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 z" fill={c}/>
+          {[['am','#F59E0B'],['gr','#6b7280'],['pu','#8b5cf6'],['bl','#007AFF']].map(([n,c])=>(
+            <marker key={n} id={`ma-${n}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 z" fill={c}/>
             </marker>
           ))}
         </defs>
-        <rect x="172" y="20" width="378" height="170" rx="14" fill="rgba(0,122,255,.025)" stroke="rgba(0,122,255,.2)" strokeWidth="1.5" strokeDasharray="5 3"/>
-        <text x="182" y="36" fontSize="9" fill="rgba(0,122,255,.45)" fontFamily="DM Sans,sans-serif" fontWeight="600" letterSpacing="0.1em">HETZNER VPS — Ubuntu 24.04</text>
-        <line x1="112" y1="110" x2="184" y2="110" stroke="#F59E0B" strokeWidth="1.5" markerEnd="url(#arr-amber)"/>
-        <text x="148" y="104" fontSize="9" fill="#92400e" textAnchor="middle" fontFamily="DM Sans,sans-serif">HTTP/80</text>
-        <line x1="278" y1="110" x2="312" y2="110" stroke="#22c55e" strokeWidth="1.5" markerEnd="url(#arr-green)"/>
-        <text x="295" y="104" fontSize="9" fill="#166534" textAnchor="middle" fontFamily="DM Sans,sans-serif">:8000</text>
-        <line x1="406" y1="96" x2="440" y2="76" stroke="#8b5cf6" strokeWidth="1.5" markerEnd="url(#arr-purple)"/>
-        <text x="430" y="78" fontSize="9" fill="#5b21b6" textAnchor="middle" fontFamily="DM Sans,sans-serif">vectores</text>
-        <line x1="406" y1="124" x2="440" y2="144" stroke="#F59E0B" strokeWidth="1.5" markerEnd="url(#arr-amber)"/>
-        <text x="430" y="160" fontSize="9" fill="#92400e" textAnchor="middle" fontFamily="DM Sans,sans-serif">logs</text>
-        <path d="M404 110 Q 500 48 589 110" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="4 2" markerEnd="url(#arr-green)"/>
-        <text x="496" y="64" fontSize="9" fill="#166534" textAnchor="middle" fontFamily="DM Sans,sans-serif">embed + chat</text>
-        {nodes.map(n=>(
-          <g key={n.id} onMouseEnter={()=>setTip(n)} onMouseLeave={()=>setTip(null)}>
-            <rect x={n.x} y={n.y} width={n.w} height={n.h} rx="10" fill={`${n.color}18`} stroke={n.color} strokeWidth="1.5"/>
-            <text x={n.x+n.w/2} y={n.y+14} fontSize="15" textAnchor="middle" dominantBaseline="middle">{n.emoji}</text>
-            <text x={n.x+n.w/2} y={n.y+n.h-10} fontSize="10" textAnchor="middle" fontFamily="DM Sans,sans-serif" fontWeight="600" fill="#1a1814">{n.label}</text>
-          </g>
-        ))}
+
+        {/* Server rect */}
+        <rect x="120" y="14" width="534" height="212" rx="12" fill="rgba(245,158,11,.025)" stroke="rgba(245,158,11,.4)" strokeWidth="1.5" strokeDasharray="6 3"/>
+        <text x="131" y="28" fontSize="8" fill="rgba(245,158,11,.7)" fontFamily={F} fontWeight="700" letterSpacing="0.1em">SERVIDOR HETZNER VPS · UBUNTU 24.04 · 4 GB RAM</text>
+
+        {/* OpenAI external box */}
+        <rect x="674" y="70" width="130" height="80" rx="10" fill="rgba(0,122,255,.05)" stroke="#007AFF" strokeWidth="1.2" strokeDasharray="4 2"/>
+        <text x="739" y="97" fontSize="10" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#007AFF">OpenAI API</text>
+        <text x="739" y="111" fontSize="8" textAnchor="middle" fontFamily={F} fill="rgba(0,122,255,.75)">text-embedding-3-small</text>
+        <text x="739" y="122" fontSize="8" textAnchor="middle" fontFamily={F} fill="rgba(0,122,255,.75)">GPT-4o-mini · GPT-4o</text>
+        <text x="739" y="140" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(0,122,255,.45)">APIs externas</text>
+
+        {/* Node: Ciudadano */}
+        <rect x="8" y="80" width="96" height="58" rx="8" fill="rgba(245,158,11,.07)" stroke="#F59E0B" strokeWidth="1.2"/>
+        <text x="56" y="104" fontSize="11" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#92400e">Ciudadano</text>
+        <text x="56" y="118" fontSize="8.5" textAnchor="middle" fontFamily={F} fill="#92400e">Navegador web</text>
+        <text x="56" y="129" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(146,64,14,.55)">React SPA</text>
+
+        {/* Node: Nginx */}
+        <rect x="140" y="80" width="92" height="58" rx="8" fill="rgba(34,197,94,.07)" stroke="#22c55e" strokeWidth="1.2"/>
+        <text x="186" y="104" fontSize="11" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#166534">Nginx</text>
+        <text x="186" y="118" fontSize="8.5" textAnchor="middle" fontFamily={F} fill="#166534">reverse proxy</text>
+        <text x="186" y="129" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(22,101,52,.55)">static files · :80</text>
+
+        {/* Node: FastAPI */}
+        <rect x="284" y="80" width="108" height="58" rx="8" fill="rgba(0,122,255,.07)" stroke="#007AFF" strokeWidth="1.2"/>
+        <text x="338" y="104" fontSize="11" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#007AFF">FastAPI</text>
+        <text x="338" y="118" fontSize="8.5" textAnchor="middle" fontFamily={F} fill="#007AFF">API REST · 8 endpoints</text>
+        <text x="338" y="129" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(0,122,255,.55)">Uvicorn · :8000</text>
+
+        {/* Node: ChromaDB */}
+        <rect x="448" y="42" width="108" height="58" rx="8" fill="rgba(139,92,246,.07)" stroke="#8b5cf6" strokeWidth="1.2"/>
+        <text x="502" y="66" fontSize="11" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#5b21b6">ChromaDB</text>
+        <text x="502" y="80" fontSize="8.5" textAnchor="middle" fontFamily={F} fill="#5b21b6">1621 vectores · PCA 3D</text>
+        <text x="502" y="91" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(91,33,182,.5)">búsqueda coseno</text>
+
+        {/* Node: SQLite */}
+        <rect x="448" y="138" width="108" height="58" rx="8" fill="rgba(245,158,11,.07)" stroke="#F59E0B" strokeWidth="1.2"/>
+        <text x="502" y="162" fontSize="11" textAnchor="middle" fontFamily={F} fontWeight="700" fill="#92400e">SQLite</text>
+        <text x="502" y="176" fontSize="8.5" textAnchor="middle" fontFamily={F} fill="#92400e">22 métricas / consulta</text>
+        <text x="502" y="187" fontSize="7.5" textAnchor="middle" fontFamily={F} fill="rgba(146,64,14,.5)">conversaciones.db</text>
+
+        {/* Arrows */}
+        {/* Ciudadano → Nginx */}
+        <line x1="106" y1="109" x2="136" y2="109" stroke="#F59E0B" strokeWidth="1.4" markerEnd="url(#ma-am)"/>
+        <text x="121" y="103" fontSize="8" fill="#92400e" textAnchor="middle" fontFamily={F}>HTTP :80</text>
+
+        {/* Nginx → FastAPI */}
+        <line x1="234" y1="109" x2="280" y2="109" stroke="#6b7280" strokeWidth="1.4" markerEnd="url(#ma-gr)"/>
+        <text x="257" y="103" fontSize="8" fill="#6b7280" textAnchor="middle" fontFamily={F}>proxy</text>
+
+        {/* FastAPI → ChromaDB */}
+        <line x1="392" y1="96" x2="444" y2="78" stroke="#8b5cf6" strokeWidth="1.4" markerEnd="url(#ma-pu)"/>
+        <text x="425" y="79" fontSize="7.5" fill="#5b21b6" textAnchor="middle" fontFamily={F}>vectores</text>
+
+        {/* FastAPI → SQLite */}
+        <line x1="392" y1="124" x2="444" y2="155" stroke="#F59E0B" strokeWidth="1.4" markerEnd="url(#ma-am)"/>
+        <text x="425" y="153" fontSize="7.5" fill="#92400e" textAnchor="middle" fontFamily={F}>logs</text>
+
+        {/* FastAPI → OpenAI */}
+        <path d="M392 94 Q 530 28 670 96" fill="none" stroke="#007AFF" strokeWidth="1.3" markerEnd="url(#ma-bl)" strokeDasharray="5 2"/>
+        {/* OpenAI → FastAPI */}
+        <path d="M670 122 Q 530 180 392 126" fill="none" stroke="#007AFF" strokeWidth="1.3" markerEnd="url(#ma-bl)" strokeDasharray="5 2"/>
+        <text x="532" y="34" fontSize="8" fill="#007AFF" textAnchor="middle" fontFamily={F}>embeddings + chat</text>
       </svg>
-      {tip && (
-        <div style={{position:'absolute',top:4,left:'50%',transform:'translateX(-50%)',background:'rgba(255,255,255,.96)',border:'1px solid rgba(0,0,0,.08)',borderRadius:10,padding:'5px 14px',fontSize:'.73rem',color:'var(--text-secondary)',boxShadow:'0 4px 16px rgba(0,0,0,.1)',whiteSpace:'nowrap',zIndex:10,pointerEvents:'none'}}>
-          <strong style={{color:'var(--text-primary)'}}>{tip.label}</strong> · {tip.desc}
-        </div>
-      )}
     </div>
   );
 }
 
 function PipelineHorizCard({ color, title, subtitle, nodes, note }) {
   const [revealed, setRevealed] = useState([]);
-  const [playing, setPlaying] = useState(false);
   const timerRef = useRef([]);
 
-  const play = () => {
-    if (playing) return;
-    setPlaying(true);
-    setRevealed([]);
-    timerRef.current.forEach(t => clearTimeout(t));
-    timerRef.current = nodes.map((_,i) => setTimeout(() => setRevealed(r=>[...r,i]), i*200));
-    setTimeout(() => setPlaying(false), nodes.length*200+400);
-  };
-
   useEffect(() => {
-    const t = setTimeout(play, 400);
-    return () => { clearTimeout(t); timerRef.current.forEach(c=>clearTimeout(c)); };
+    timerRef.current = nodes.map((_,i) => setTimeout(() => setRevealed(r=>[...r,i]), 400 + i*200));
+    return () => timerRef.current.forEach(c=>clearTimeout(c));
   }, []);
 
   return (
-    <div className="glass" style={{borderRadius:'var(--radius)',padding:20,borderTop:`3px solid ${color}`,marginBottom:16}}>
-      <div style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
-        <div>
-          <div style={{fontFamily:'Playfair Display,serif',fontSize:'1rem',fontWeight:600,color,marginBottom:3}}>{title}</div>
-          <div style={{fontSize:'.74rem',color:'var(--text-muted)'}}>{subtitle}</div>
-        </div>
-        <button onClick={play} style={{padding:'5px 12px',borderRadius:99,background:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.8)',fontSize:'.74rem',fontFamily:'DM Sans,sans-serif',cursor:'none',color:'var(--text-secondary)',flexShrink:0}}>▶ Replay</button>
+    <div className="glass" style={{borderRadius:'var(--radius)',padding:20,borderTop:`3px solid ${color}`,marginBottom:16,width:'100%',boxSizing:'border-box'}}>
+      <div style={{marginBottom:14}}>
+        <div style={{fontFamily:'Playfair Display,serif',fontSize:'1rem',fontWeight:600,color,marginBottom:3}}>{title}</div>
+        <div style={{fontSize:'.74rem',color:'var(--text-muted)'}}>{subtitle}</div>
       </div>
-      <div style={{display:'flex',flexWrap:'wrap',alignItems:'flex-start',gap:0}}>
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'flex-start',gap:0,width:'100%'}}>
         {nodes.map((n,i)=>(
           <React.Fragment key={i}>
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',opacity:revealed.includes(i)?1:0,transform:revealed.includes(i)?'scale(1)':'scale(0)',transition:'opacity .25s,transform .25s cubic-bezier(.34,1.56,.64,1)',padding:'4px 5px',minWidth:66}}>
-              <div style={{width:38,height:38,borderRadius:'50%',background:`${color}15`,border:`2px solid ${color}55`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,marginBottom:4}}>{n.icon}</div>
-              <div style={{fontSize:'.6rem',fontWeight:600,color:'var(--text-primary)',lineHeight:1.25,maxWidth:70}}>{n.title}</div>
-              {n.detail && <div style={{fontSize:'.57rem',color:'var(--text-muted)',lineHeight:1.2,maxWidth:70,marginTop:2}}>{n.detail}</div>}
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',opacity:revealed.includes(i)?1:0,transform:revealed.includes(i)?'scale(1)':'scale(0)',transition:'opacity .25s,transform .25s cubic-bezier(.34,1.56,.64,1)',padding:'4px 6px',minWidth:72}}>
+              <div style={{width:40,height:40,borderRadius:8,background:`${n.openai?'rgba(0,122,255,.1)':color+'18'}`,border:`1.5px solid ${n.openai?'#007AFF':color+'66'}`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:5}}>
+                <span style={{fontSize:'10px',fontWeight:700,fontFamily:'DM Mono,monospace',color:n.openai?'#007AFF':color,letterSpacing:'.02em'}}>{n.icon}</span>
+              </div>
+              <div style={{fontSize:'.6rem',fontWeight:600,color:'var(--text-primary)',lineHeight:1.25,maxWidth:76}}>{n.title}</div>
+              {n.detail && <div style={{fontSize:'.55rem',color:n.openai?'#007AFF':'var(--text-muted)',lineHeight:1.2,maxWidth:76,marginTop:2}}>{n.detail}</div>}
             </div>
             {i<nodes.length-1 && (
-              <div style={{display:'flex',alignItems:'center',paddingBottom:14,opacity:revealed.includes(i)?1:0,transition:'opacity .25s',color,fontSize:12,flexShrink:0}}>→</div>
+              <div style={{display:'flex',alignItems:'center',paddingBottom:18,opacity:revealed.includes(i)?1:0,transition:'opacity .25s',color:'var(--text-muted)',fontSize:13,flexShrink:0}}>→</div>
             )}
           </React.Fragment>
         ))}
@@ -1305,24 +1381,24 @@ function PipelineTab() {
   const latMedia = metrics?.latencia_media_ms ? `${metrics.latencia_media_ms}ms` : '—';
 
   const indexNodes = [
-    {icon:'📄',title:'PDFs oficiales'},
-    {icon:'✂️',title:'Extracción pdfplumber',detail:'página a página'},
-    {icon:'🔤',title:'Normalización'},
-    {icon:'📊',title:'Detección tablas',detail:'→ texto narrativo'},
-    {icon:'✨',title:'Narrativización',detail:'⚡ GPT-4o'},
-    {icon:'🧩',title:'Chunking',detail:'500t · 50s solapamiento'},
-    {icon:'🔢',title:'Embeddings',detail:'⚡ text-embedding-3-small'},
-    {icon:'🗄️',title:'ChromaDB',detail:`→ ${vectorCount} chunks`},
+    {icon:'PDF',title:'PDFs oficiales'},
+    {icon:'EXT',title:'Extracción',detail:'pdfplumber · pág. a pág.'},
+    {icon:'NRM',title:'Normalización',detail:'texto limpio'},
+    {icon:'TBL',title:'Tablas → texto',detail:'detección automática'},
+    {icon:'NAR',title:'Narrativización',detail:'· OpenAI API',openai:true},
+    {icon:'CHK',title:'Chunking',detail:'500t · 50 solapamiento'},
+    {icon:'EMB',title:'Embeddings',detail:'· OpenAI API',openai:true},
+    {icon:'VDB',title:'ChromaDB',detail:`${vectorCount} vectores`},
   ];
 
   const queryNodes = [
-    {icon:'💬',title:'Pregunta ciudadano'},
-    {icon:'🔢',title:'Embedding pregunta',detail:'⚡ text-embedding-3-small'},
-    {icon:'🔍',title:'Búsqueda coseno',detail:'ChromaDB · top-6'},
-    {icon:'📝',title:'Prompt + contexto'},
-    {icon:'🤖',title:'Respuesta',detail:'⚡ GPT-4o-mini'},
-    {icon:'📊',title:'Texto + gráfico'},
-    {icon:'💾',title:'Log SQLite',detail:'22 métricas'},
+    {icon:'USR',title:'Pregunta ciudadano'},
+    {icon:'EMB',title:'Embedding',detail:'· OpenAI API',openai:true},
+    {icon:'COS',title:'Búsqueda coseno',detail:'ChromaDB · top-6'},
+    {icon:'CTX',title:'Prompt + contexto',detail:'RAG balanceado'},
+    {icon:'GPT',title:'Respuesta',detail:'· OpenAI API',openai:true},
+    {icon:'JSN',title:'Texto + gráfico',detail:'JSON estructurado'},
+    {icon:'LOG',title:'Log SQLite',detail:'22 métricas'},
   ];
 
   return (
@@ -1336,14 +1412,14 @@ function PipelineTab() {
         title="Pipeline de indexación"
         subtitle="Preparación del conocimiento — ejecutado en local"
         nodes={indexNodes}
-        note="Ejecutado en local por limitaciones de RAM del servidor de producción"
+        note="Ejecutado en local · PDFs grandes requieren más RAM de la disponible en el servidor de producción"
       />
       <PipelineHorizCard
         color="#F59E0B"
         title="Pipeline de consulta"
         subtitle="Respuesta al ciudadano en tiempo real"
         nodes={queryNodes}
-        note={`Ejecutado en servidor en cada consulta · latencia media: ${latMedia}`}
+        note={`Latencia media real: ${latMedia} · Ejecutado en servidor en cada consulta`}
       />
     </div>
   );
@@ -1738,6 +1814,27 @@ function InsightsTab() {
   );
 }
 
+// ══ CIVITAS LOGO ══
+function CivitasLogo({ size=32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <path d="M16,16 L16,2 A14,14 0 0,1 29.3,20.3" stroke="#F59E0B" strokeWidth="2.8" strokeLinecap="round"/>
+      <path d="M16,16 L29.3,20.3 A14,14 0 0,1 11.7,29.3" stroke="#7B8FF7" strokeWidth="2.8" strokeLinecap="round"/>
+      <path d="M16,16 L11.7,29.3 A14,14 0 0,1 2.7,11.7" stroke="#007AFF" strokeWidth="2.8" strokeLinecap="round"/>
+      <path d="M16,16 L2.7,11.7 A14,14 0 0,1 16,2" stroke="#0055CC" strokeWidth="2.8" strokeLinecap="round"/>
+      <circle cx="16" cy="16" r="2.5" fill="#F59E0B"/>
+    </svg>
+  );
+}
+
+// ══ SPAIN MAP DATA ══
+
+const INDEXED_INFO = {
+  andalucia:'Andalucía · 890 fragmentos · 51.597M€ presupuestado',
+  castillaleon:'Castilla y León · 638 fragmentos · indexado',
+  madrid:'Madrid · 93 fragmentos · Presupuesto General 2026',
+};
+
 // ══ MAIN APP ══
 function App() {
   const [activeTab, setActiveTab] = useState('ciudadano');
@@ -1746,7 +1843,10 @@ function App() {
   return (
     <>
       <nav>
-        <div className="nav-logo">◈ Civitas</div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <button onClick={()=>typeof window.goToHomepage==='function'&&window.goToHomepage()} style={{background:'none',border:'none',fontFamily:'DM Sans,sans-serif',fontSize:'.73rem',color:'var(--text-muted)',cursor:'none',padding:'4px 8px',borderRadius:6,letterSpacing:'.03em'}}>← Inicio</button>
+          <div className="nav-logo"><CivitasLogo size={20}/> Civitas</div>
+        </div>
         <div className="nav-tabs">
           {tabs.map(t=>(
             <button key={t.id} className={`nav-tab ${activeTab===t.id?'active':''}`} onClick={()=>setActiveTab(t.id)}>
@@ -1780,6 +1880,514 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById('app'));
 root.render(<App/>);
+
+// ══ PANTALLA 0 — ANIMACIÓN ══
+
+const SPAIN_PATHS = {
+  galicia: "M 80.8,6.3 L 150.8,6.3 L 161.5,44.3 L 134.6,88.6 L 53.8,120.3 L 10.8,69.6 L 26.9,25.3 Z",
+  asturias: "M 150.8,6.3 L 269.2,12.7 L 280.0,50.6 L 215.4,69.6 L 161.5,44.3 Z",
+  cantabria: "M 269.2,12.7 L 339.2,25.3 L 350.0,57.0 L 280.0,50.6 Z",
+  paisvasco: "M 339.2,25.3 L 414.6,25.3 L 420.0,69.6 L 376.9,88.6 L 350.0,57.0 Z",
+  navarra: "M 414.6,25.3 L 473.8,38.0 L 495.4,69.6 L 457.7,126.6 L 403.8,120.3 L 376.9,88.6 L 420.0,69.6 Z",
+  larioja: "M 350.0,57.0 L 376.9,88.6 L 403.8,120.3 L 420.0,145.6 L 350.0,151.9 L 339.2,120.3 Z",
+  aragon: "M 473.8,38.0 L 549.2,69.6 L 565.4,183.5 L 522.3,278.5 L 457.7,259.5 L 430.8,215.2 L 420.0,145.6 L 457.7,126.6 L 495.4,69.6 Z",
+  cataluna: "M 549.2,69.6 L 689.2,88.6 L 689.2,164.6 L 549.2,215.2 L 522.3,278.5 L 565.4,183.5 Z",
+  castillaleon: "M 26.9,25.3 L 53.8,120.3 L 134.6,88.6 L 161.5,44.3 L 150.8,6.3 L 269.2,12.7 L 280.0,50.6 L 350.0,57.0 L 339.2,120.3 L 350.0,151.9 L 420.0,145.6 L 430.8,215.2 L 457.7,259.5 L 376.9,278.5 L 215.4,310.1 L 134.6,341.8 L 107.7,246.8 L 145.4,151.9 L 53.8,120.3 L 10.8,69.6 Z",
+  madrid: "M 323.1,189.9 L 350.0,215.2 L 339.2,246.8 L 296.2,246.8 L 285.4,215.2 Z",
+  extremadura: "M 107.7,246.8 L 215.4,310.1 L 145.4,373.4 L 107.7,405.1 L 16.2,436.7 L 10.8,278.5 L 134.6,246.8 Z",
+  castillamancha: "M 215.4,310.1 L 376.9,278.5 L 457.7,259.5 L 522.3,278.5 L 511.5,341.8 L 457.7,405.1 L 403.8,436.7 L 296.2,436.7 L 269.2,373.4 L 134.6,341.8 Z",
+  comvalenciana: "M 522.3,278.5 L 549.2,215.2 L 527.7,151.9 L 511.5,132.9 L 457.7,126.6 L 457.7,259.5 Z",
+  murcia: "M 457.7,405.1 L 511.5,341.8 L 479.2,398.7 L 452.3,417.7 L 403.8,436.7 Z",
+  andalucia: "M 107.7,405.1 L 145.4,373.4 L 215.4,310.1 L 296.2,436.7 L 403.8,436.7 L 452.3,417.7 L 479.2,398.7 L 511.5,341.8 L 457.7,405.1 L 403.8,500.0 L 226.2,500.0 L 107.7,436.7 L 16.2,436.7 Z",
+};
+
+const SPAIN_CENTROIDS = {
+  galicia: [88.5, 51.5],
+  asturias: [215.4, 36.7],
+  cantabria: [309.6, 36.4],
+  paisvasco: [380.2, 53.2],
+  navarra: [434.6, 76.9],
+  larioja: [373.3, 113.9],
+  aragon: [485.8, 154.0],
+  cataluna: [594.1, 166.7],
+  castillaleon: [223.5, 140.8],
+  madrid: [318.8, 222.8],
+  extremadura: [105.4, 328.2],
+  castillamancha: [364.5, 346.2],
+  comvalenciana: [504.4, 194.1],
+  murcia: [460.9, 400.0],
+  andalucia: [294.1, 415.3],
+};
+
+const INDEXED_COMMUNITIES = new Set(['castillaleon','madrid','andalucia']);
+const ALL_COMMUNITIES = Object.keys(SPAIN_PATHS);
+
+const RENDER_ORDER = [
+  'castillaleon',
+  'castillamancha',
+  'andalucia',
+  'extremadura',
+  'aragon',
+  'cataluna',
+  'comvalenciana',
+  'navarra',
+  'galicia',
+  'asturias',
+  'murcia',
+  'cantabria',
+  'paisvasco',
+  'larioja',
+  'madrid',
+];
+
+function SpainMap({ litRegions, zoomedRegion, showCard, indexedInfo, mapVisible }) {
+  const mapRef = useRef(null);
+  const leafletRef = useRef(null);
+  const layersRef = useRef({});
+
+  useEffect(() => {
+    if (!mapRef.current || leafletRef.current) return;
+
+    const map = L.map(mapRef.current, {
+      center: [40.2, -3.0],
+      zoom: 5.8,
+      zoomControl: false,
+      attributionControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+    });
+    leafletRef.current = map;
+    window._civitasMap = map;
+
+    const NAME_TO_ID = {
+      'Andalucía': 'andalucia',
+      'Aragón': 'aragon',
+      'Asturias': 'asturias',
+      'Baleares': 'baleares',
+      'Canarias': 'canarias',
+      'Cantabria': 'cantabria',
+      'Castilla-La Mancha': 'castillamancha',
+      'Castilla y León': 'castillaleon',
+      'Cataluña': 'cataluna',
+      'Extremadura': 'extremadura',
+      'Galicia': 'galicia',
+      'La Rioja': 'larioja',
+      'Madrid': 'madrid',
+      'Murcia': 'murcia',
+      'Navarra': 'navarra',
+      'País Vasco': 'paisvasco',
+      'Comunidad Valenciana': 'comvalenciana',
+      'Ceuta': 'ceuta',
+      'Melilla': 'melilla',
+    };
+
+    fetch('https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-communities.geojson')
+      .then(r => r.json())
+      .then(data => {
+        const INDEXED = new Set(['andalucia','castillaleon','madrid']);
+        data.features.forEach(feature => {
+          const name = feature.properties.name;
+          const id = NAME_TO_ID[name] || name.toLowerCase();
+          const isIndexed = INDEXED.has(id);
+          const layer = L.geoJSON(feature, {
+            style: {
+              fillColor: isIndexed ? '#F59E0B' : '#e8e8e8',
+              fillOpacity: isIndexed ? 0.08 : 0.04,
+              color: isIndexed ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.25)',
+              weight: 0.6,
+            }
+          }).addTo(map);
+          layersRef.current[id] = { layer, isIndexed };
+        });
+      })
+      .catch(console.error);
+
+    return () => { map.remove(); leafletRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    Object.entries(layersRef.current).forEach(([id, { layer, isIndexed }]) => {
+      const isLit = litRegions.has(id);
+      const isZoomed = zoomedRegion === id;
+      const baseStyle = {
+        fillColor: isIndexed ? '#F59E0B' : '#e8e8e8',
+        color: isIndexed && isLit ? 'rgba(245,158,11,0.9)' : 'rgba(255,255,255,0.25)',
+        weight: isZoomed ? 2.5 : isLit ? 1.2 : 0.6,
+      };
+      if (isLit && isIndexed) {
+        const w = isZoomed ? 2.5 : 1.8;
+        layer.setStyle({ fillColor:'#F59E0B', color:'rgba(245,158,11,0.8)', weight:w, fillOpacity:0.6 });
+        setTimeout(() => layer.setStyle({ fillOpacity:0.3 }), 300);
+        setTimeout(() => layer.setStyle({ fillOpacity:0.45 }), 600);
+        setTimeout(() => layer.setStyle({ fillOpacity:0.35 }), 900);
+      } else if (isLit) {
+        layer.setStyle({ fillColor:'#ffffff', fillOpacity:0.1, color:'rgba(255,255,255,0.3)', weight:0.8 });
+      } else {
+        layer.setStyle({ ...baseStyle, fillOpacity: isIndexed ? 0.08 : 0.04 });
+      }
+    });
+  }, [litRegions, zoomedRegion]);
+
+  return (
+    <div style={{
+      position:'relative',
+      width:'min(620px,72vw)',
+      height:'min(420px,48vw)',
+      filter:'drop-shadow(0 40px 80px rgba(0,0,0,0.8))',
+      opacity: mapVisible ? 1 : 0,
+      transform: mapVisible
+        ? 'perspective(900px) rotateX(18deg) rotateZ(-1.5deg) scale(1)'
+        : 'perspective(900px) rotateX(18deg) rotateZ(-1.5deg) scale(0.85)',
+      transition: 'opacity 1.2s ease, transform 1.2s cubic-bezier(0.22,1,0.36,1)',
+    }}>
+      <div
+        ref={mapRef}
+        style={{
+          width:'100%',
+          height:'100%',
+          background:'transparent',
+          overflow:'visible',
+        }}
+      />
+      {showCard && (
+        <div style={{
+          position:'absolute',
+          top:'38%',
+          left:'52%',
+          zIndex:1000,
+          animation:'bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+          pointerEvents:'none',
+        }}>
+          <svg style={{position:'absolute',top:-40,left:-60,width:80,height:50,overflow:'visible',pointerEvents:'none'}}>
+            <line x1="60" y1="50" x2="60" y2="8" stroke="rgba(245,158,11,0.6)" strokeWidth="1.5" strokeDasharray="4 3"/>
+            <circle cx="60" cy="50" r="4" fill="#F59E0B" style={{animation:'dotPulse 1s infinite'}}/>
+          </svg>
+          <div style={{
+            background:'rgba(15,15,20,0.92)',
+            backdropFilter:'blur(24px)',
+            border:'1px solid rgba(245,158,11,0.3)',
+            borderRadius:16,
+            padding:'16px 20px',
+            minWidth:220,
+            boxShadow:'0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.1)',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:'#F59E0B',boxShadow:'0 0 8px #F59E0B',animation:'dotPulse 1.5s infinite'}}/>
+              <span style={{color:'#fff',fontWeight:700,fontSize:'.9rem',fontFamily:'Playfair Display,serif',letterSpacing:'.02em'}}>Madrid</span>
+              <span style={{marginLeft:'auto',fontSize:'.65rem',color:'rgba(245,158,11,0.8)',fontWeight:600,background:'rgba(245,158,11,0.1)',padding:'2px 8px',borderRadius:99,border:'1px solid rgba(245,158,11,0.2)'}}>INDEXADO</span>
+            </div>
+            {[
+              {label:'Fragmentos indexados',value:'93',unit:'chunks'},
+              {label:'Presupuesto 2026',value:'24.461',unit:'M€'},
+              {label:'Similitud media',value:'71.4',unit:'%'},
+              {label:'Documentos',value:'2',unit:'PDFs oficiales'},
+            ].map(({label,value,unit})=>(
+              <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
+                <span style={{fontSize:'.72rem',color:'rgba(255,255,255,0.5)',lineHeight:1.3,maxWidth:120}}>{label}</span>
+                <div style={{textAlign:'right',flexShrink:0}}>
+                  <span style={{fontSize:'.95rem',fontWeight:700,color:'#F59E0B',fontFamily:'Playfair Display,serif'}}>{value}</span>
+                  <span style={{fontSize:'.62rem',color:'rgba(255,255,255,0.4)',marginLeft:4}}>{unit}</span>
+                </div>
+              </div>
+            ))}
+            <div style={{marginTop:10,fontSize:'.68rem',color:'rgba(255,255,255,0.3)',textAlign:'center',lineHeight:1.4}}>
+              Presupuestos Generales Madrid 2026
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PantallaAnimacion({ onDone }) {
+  const [logoPhase, setLogoPhase] = useState(0);
+  const [logoMoved, setLogoMoved] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [canSkip, setCanSkip] = useState(false);
+  const [litRegions, setLitRegions] = useState(new Set());
+  const [zoomedRegion, setZoomedRegion] = useState(null);
+  const [showCard, setShowCard] = useState(false);
+  const [showTagline, setShowTagline] = useState(false);
+  const [showCta, setShowCta] = useState(false);
+
+  useEffect(() => {
+    const ts = [];
+    const t = (ms, fn) => ts.push(setTimeout(fn, ms));
+    t(300,  () => setLogoPhase(1));
+    t(1800, () => { setLogoPhase(2); setLogoMoved(true); });
+    t(2200, () => setMapVisible(true));
+    t(3000, () => setCanSkip(true));
+    const litOrder = ['galicia','asturias','cantabria','paisvasco',
+      'navarra','larioja','aragon','cataluna','castillaleon',
+      'madrid','extremadura','castillamancha','comvalenciana',
+      'murcia','andalucia'];
+    litOrder.forEach((r,i) => t(3200+i*120, () => setLitRegions(prev=>{ const s=new Set(prev); s.add(r); return s; })));
+    t(5000, () => {
+      if (window._civitasMap) {
+        window._civitasMap.flyTo([40.0, -3.8], 6.2, { animate:true, duration:1.8, easeLinearity:0.1 });
+      }
+    });
+    t(5500, () => {
+      setZoomedRegion('madrid');
+      if (window._civitasMap) {
+        window._civitasMap.flyTo([40.4, -3.7], 7.5, { animate:true, duration:2.0, easeLinearity:0.05 });
+      }
+    });
+    t(6200, () => setShowCard(true));
+    t(8500, () => {
+      setShowCard(false);
+      setZoomedRegion(null);
+      if (window._civitasMap) {
+        window._civitasMap.flyTo([40.2, -3.0], 5.8, { animate:true, duration:2.5, easeLinearity:0.1 });
+      }
+    });
+    t(9500, () => setShowTagline(true));
+    t(10500, () => setShowCta(true));
+    return () => ts.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div style={{position:'absolute',inset:0,background:'#0A0A0F',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:-80,right:-80,width:420,height:420,borderRadius:'50%',background:'rgba(245,158,11,.08)',filter:'blur(120px)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',bottom:-80,left:-80,width:420,height:420,borderRadius:'50%',background:'rgba(0,122,255,.08)',filter:'blur(120px)',pointerEvents:'none'}}/>
+
+      {/* Logo */}
+      <div style={{
+        position:'absolute',
+        top: logoMoved ? '24px' : '50%',
+        left: logoMoved ? '32px' : '50%',
+        transform: logoMoved ? 'translate(0,0) scale(0.75)' : 'translate(-50%,-50%) scale(1.4)',
+        opacity: logoPhase >= 1 ? (logoMoved ? 0.9 : 1) : 0,
+        transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
+        zIndex:10,display:'flex',flexDirection:'column',alignItems:'center',gap:10
+      }}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <CivitasLogo size={52}/>
+          <span style={{fontFamily:'Playfair Display,serif',fontSize:'2.4rem',fontWeight:700,color:'#fff',letterSpacing:'.15em'}}>CIVITAS</span>
+        </div>
+        <div style={{width:40,height:1.5,background:'#F59E0B',borderRadius:1}}/>
+      </div>
+
+      {/* Spain map */}
+      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',paddingTop:60,overflow:'hidden'}}>
+        <SpainMap
+          litRegions={litRegions}
+          zoomedRegion={zoomedRegion}
+          showCard={showCard}
+          indexedInfo={INDEXED_INFO}
+          mapVisible={mapVisible}
+        />
+      </div>
+
+      {/* Tagline */}
+      {showTagline && (
+        <div style={{position:'absolute',bottom:'18%',left:0,right:0,textAlign:'center',color:'rgba(255,255,255,.7)',fontFamily:'DM Sans,sans-serif',fontSize:'1.1rem',animation:'fadeUp .6s ease'}}>
+          El gasto público español, en lenguaje humano.
+        </div>
+      )}
+
+      {/* CTA */}
+      {showCta && (
+        <div style={{position:'absolute',bottom:'8%',left:0,right:0,textAlign:'center',animation:'springIn .6s cubic-bezier(.34,1.56,.64,1)'}}>
+          <button onClick={onDone} style={{padding:'14px 36px',borderRadius:99,background:'#F59E0B',color:'#fff',border:'none',fontFamily:'DM Sans,sans-serif',fontSize:'1rem',fontWeight:500,cursor:'none',boxShadow:'0 4px 20px rgba(245,158,11,.4)'}}>
+            Explorar Civitas →
+          </button>
+        </div>
+      )}
+
+      {/* Skip */}
+      {canSkip && !showCta && (
+        <div style={{position:'absolute',bottom:24,right:24,animation:'fadeUp .4s ease'}}>
+          <button onClick={onDone} style={{background:'none',border:'1px solid rgba(255,255,255,.2)',color:'rgba(255,255,255,.5)',padding:'8px 16px',borderRadius:99,fontFamily:'DM Sans,sans-serif',fontSize:'.78rem',cursor:'none'}}>Saltar →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══ PANTALLA 1 — HOMEPAGE ══
+function PantallaHomepage({ onGoPlanes, onGoApp }) {
+  return (
+    <div className="pn-hp">
+      <div style={{position:'absolute',top:-80,right:-80,width:480,height:480,borderRadius:'50%',background:'rgba(245,158,11,.07)',filter:'blur(120px)',pointerEvents:'none',zIndex:0,flexShrink:0}}/>
+      <div style={{position:'absolute',bottom:-80,left:-80,width:480,height:480,borderRadius:'50%',background:'rgba(0,122,255,.07)',filter:'blur(120px)',pointerEvents:'none',zIndex:0,flexShrink:0}}/>
+
+      <div className="pn-hp-nav">
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <CivitasLogo size={28}/>
+          <span style={{fontFamily:'Playfair Display,serif',fontSize:'1.05rem',fontWeight:600,color:'#fff',letterSpacing:'.12em'}}>CIVITAS</span>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button style={{padding:'8px 18px',borderRadius:99,background:'none',border:'1px solid rgba(255,255,255,.2)',color:'rgba(255,255,255,.7)',fontFamily:'DM Sans,sans-serif',fontSize:'.82rem',cursor:'none'}}>Iniciar sesión</button>
+          <button onClick={onGoPlanes} style={{padding:'8px 18px',borderRadius:99,background:'#F59E0B',border:'none',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:'.82rem',fontWeight:500,cursor:'none'}}>Ver planes</button>
+        </div>
+      </div>
+
+      <div className="pn-hp-hero" style={{position:'relative',zIndex:1}}>
+        <h1 style={{fontFamily:'Playfair Display,serif',fontSize:'clamp(2.8rem,5vw,4rem)',fontWeight:700,color:'#fff',lineHeight:1.1,marginBottom:20,letterSpacing:'-.02em',maxWidth:700}}>
+          Transparencia presupuestaria<br/>para todos los españoles.
+        </h1>
+        <p style={{fontSize:'1.05rem',color:'rgba(255,255,255,.6)',lineHeight:1.65,marginBottom:36,maxWidth:540}}>
+          Civitas convierte miles de páginas de presupuestos públicos en conversaciones simples. Pregunta, compara, entiende.
+        </p>
+        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+          <button onClick={onGoApp} style={{padding:'14px 32px',borderRadius:99,background:'#F59E0B',border:'none',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:'1rem',fontWeight:500,cursor:'none',boxShadow:'0 4px 20px rgba(245,158,11,.35)'}}>Empezar gratis →</button>
+          <button onClick={onGoPlanes} style={{padding:'14px 32px',borderRadius:99,background:'none',border:'1px solid rgba(255,255,255,.25)',color:'rgba(255,255,255,.8)',fontFamily:'DM Sans,sans-serif',fontSize:'1rem',cursor:'none'}}>Ver planes</button>
+        </div>
+      </div>
+
+      <div className="pn-stats" style={{position:'relative',zIndex:1}}>
+        {[
+          {num:'1.621',lbl:'fragmentos oficiales indexados'},
+          {num:'4',lbl:'comunidades autónomas'},
+          {num:'100%',lbl:'fuentes públicas verificadas'},
+        ].map(s=>(
+          <div key={s.lbl} className="pn-stat">
+            <div style={{fontFamily:'Playfair Display,serif',fontSize:'2.5rem',fontWeight:700,color:'#F59E0B',lineHeight:1}}>{s.num}</div>
+            <div style={{fontSize:'.78rem',color:'rgba(255,255,255,.5)',marginTop:6}}>{s.lbl}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pn-steps" style={{position:'relative',zIndex:1}}>
+        {[
+          {ico:'🔍',t:'Pregunta en tu idioma',d:'Sin tecnicismos. Como si le preguntaras a un experto.'},
+          {ico:'📄',t:'Civitas busca en las fuentes',d:'Analiza documentos oficiales y cita la página exacta.'},
+          {ico:'💡',t:'Recibe una respuesta clara',d:'Con datos, comparativas y gráficos cuando ayudan.'},
+        ].map(s=>(
+          <div key={s.t} className="pn-step">
+            <div style={{fontSize:'1.6rem',marginBottom:10}}>{s.ico}</div>
+            <div style={{fontFamily:'Playfair Display,serif',fontSize:'.95rem',fontWeight:600,color:'#fff',marginBottom:8}}>{s.t}</div>
+            <div style={{fontSize:'.8rem',color:'rgba(255,255,255,.55)',lineHeight:1.55}}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pn-hp-footer" style={{position:'relative',zIndex:1}}>
+        <p style={{fontSize:'.72rem',color:'rgba(255,255,255,.3)'}}>
+          Civitas · Proyecto académico · Máster IA ISDI 2026 · Datos de fuentes públicas oficiales
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ══ PANTALLA 2 — PLANES ══
+const PLANES_DATA = [
+  {id:'ciudadano',badge:'GRATIS SIEMPRE',badgeBg:'rgba(34,197,94,.12)',badgeColor:'#166534',title:'Ciudadano',precio:'0€',prLabel:null,sub:null,featured:true,feats:['10 consultas por día','Chat conversacional','Fuentes citadas con página','Gráficos automáticos'],btnLabel:'Empezar ahora →',btnBg:'#F59E0B',btnColor:'#fff',btnBorder:'none',direct:true},
+  {id:'explorer',badge:'PAY AS YOU GO',badgeBg:'rgba(0,122,255,.1)',badgeColor:'#1d4ed8',title:'Explorer',precio:'0,05€',prLabel:'por consulta',sub:'Sin mínimos. Sin suscripción.',featured:false,feats:['Consultas ilimitadas','Todo lo del plan Ciudadano','Exportar respuestas en PDF','Alertas de nuevos documentos'],btnLabel:'Activar →',btnBg:'none',btnColor:'#F59E0B',btnBorder:'1px solid #F59E0B',direct:false},
+  {id:'api',badge:'PARA DESARROLLADORES',badgeBg:'rgba(139,92,246,.1)',badgeColor:'#5b21b6',title:'API',precio:'0,03€',prLabel:'por llamada',sub:'Descuento por volumen disponible',featured:false,feats:['Acceso REST API completo','Autenticación por API key','Documentación completa','Hasta 50% descuento en volumen'],btnLabel:'Ver documentación →',btnBg:'none',btnColor:'#007AFF',btnBorder:'1px solid #007AFF',direct:false},
+  {id:'institucional',badge:'ENTERPRISE',badgeBg:'rgba(0,0,0,.06)',badgeColor:'#374151',title:'Institucional',precio:'A medida',prLabel:null,sub:null,featured:false,feats:['Todo lo anterior','Indexa tus propios documentos','Informes automatizados mensuales','SLA garantizado','Soporte prioritario'],btnLabel:'Contactar →',btnBg:'none',btnColor:'var(--text-primary)',btnBorder:'1px solid rgba(0,0,0,.15)',direct:false},
+];
+
+function PantallaPlanes({ onBack, onGoApp }) {
+  const [toast, setToast] = useState(false);
+  const showToast = () => { setToast(true); setTimeout(()=>setToast(false),4000); };
+
+  return (
+    <div className="pn-pl">
+      <div className="pn-pl-nav">
+        <button onClick={onBack} style={{background:'none',border:'none',fontFamily:'DM Sans,sans-serif',fontSize:'.85rem',color:'var(--text-secondary)',cursor:'none',display:'flex',alignItems:'center',gap:4}}>← Volver</button>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <CivitasLogo size={24}/>
+          <span style={{fontFamily:'Playfair Display,serif',fontSize:'1rem',fontWeight:600,letterSpacing:'.1em'}}>CIVITAS</span>
+        </div>
+        <button onClick={onGoApp} style={{padding:'8px 20px',borderRadius:99,background:'#F59E0B',border:'none',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:'.82rem',fontWeight:500,cursor:'none'}}>Acceder a la app →</button>
+      </div>
+
+      <div style={{textAlign:'center',padding:'44px 32px 28px'}}>
+        <h1 style={{fontFamily:'Playfair Display,serif',fontSize:'2.4rem',fontWeight:700,marginBottom:10}}>Elige cómo usar Civitas</h1>
+        <p style={{fontSize:'1rem',color:'var(--text-secondary)'}}>Sin suscripciones. Pagas solo lo que usas.</p>
+      </div>
+
+      <div className="planes-grid">
+        {PLANES_DATA.map(p=>(
+          <div key={p.id} className={`plan-card ${p.featured?'featured':''}`}>
+            <span style={{display:'inline-block',padding:'3px 10px',borderRadius:99,background:p.badgeBg,color:p.badgeColor,fontSize:'.63rem',fontWeight:700,letterSpacing:'.08em',alignSelf:'flex-start'}}>{p.badge}</span>
+            <div style={{fontFamily:'Playfair Display,serif',fontSize:'1.1rem',fontWeight:600}}>{p.title}</div>
+            <div>
+              <span style={{fontFamily:'Playfair Display,serif',fontSize:'2rem',fontWeight:700}}>{p.precio}</span>
+              {p.prLabel&&<span style={{fontSize:'.75rem',color:'var(--text-muted)',marginLeft:5}}>{p.prLabel}</span>}
+              {p.sub&&<div style={{fontSize:'.71rem',color:'var(--text-muted)',marginTop:3}}>{p.sub}</div>}
+            </div>
+            <div style={{flex:1}}>{p.feats.map(f=><div key={f} className="plan-feat">{f}</div>)}</div>
+            <button onClick={p.direct?onGoApp:showToast} style={{background:p.btnBg,color:p.btnColor,border:p.btnBorder,padding:'10px 20px',borderRadius:99,fontFamily:'DM Sans,sans-serif',fontSize:'.84rem',fontWeight:500,cursor:'none',width:'100%'}}>{p.btnLabel}</button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{textAlign:'center',padding:'28px 32px',borderTop:'1px solid rgba(0,0,0,.06)',margin:'0 32px'}}>
+        <div style={{fontSize:'.84rem',color:'var(--text-secondary)',marginBottom:16}}>¿Ya tienes cuenta?</div>
+        <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+          <button onClick={showToast} style={{padding:'10px 20px',borderRadius:99,background:'#fff',border:'1px solid rgba(0,0,0,.1)',fontFamily:'DM Sans,sans-serif',fontSize:'.84rem',cursor:'none',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 8px rgba(0,0,0,.08)'}}>
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" style={{flexShrink:0}}>
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+              <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Continuar con Google
+          </button>
+          <button onClick={showToast} style={{padding:'10px 20px',borderRadius:99,background:'none',border:'1px solid rgba(0,0,0,.15)',fontFamily:'DM Sans,sans-serif',fontSize:'.84rem',color:'var(--text-secondary)',cursor:'none'}}>Continuar con email</button>
+        </div>
+      </div>
+
+      <div style={{textAlign:'center',padding:'28px 32px 44px'}}>
+        <div style={{fontSize:'.88rem',color:'var(--text-secondary)',marginBottom:14}}>¿Solo quieres explorar?</div>
+        <button onClick={onGoApp} style={{padding:'14px 40px',borderRadius:99,background:'var(--amber)',border:'none',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:'1rem',fontWeight:500,cursor:'none',boxShadow:'0 4px 16px rgba(245,158,11,.25)'}}>Acceder como ciudadano →</button>
+      </div>
+
+      {toast&&(
+        <div className="pn-toast">
+          <span>Login disponible próximamente · Por ahora, accede gratis</span>
+          <button onClick={onGoApp} style={{padding:'5px 12px',borderRadius:8,background:'rgba(255,255,255,.15)',border:'1px solid rgba(255,255,255,.2)',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:'.76rem',cursor:'none',whiteSpace:'nowrap',flexShrink:0}}>Acceder →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══ SCREEN MANAGER ══
+function ScreenManager() {
+  const [pantalla, setPantalla] = useState('animacion');
+  const [fading, setFading] = useState(false);
+
+  const goTo = useCallback((next) => {
+    setFading(true);
+    setTimeout(()=>{ setPantalla(next); setFading(false); }, 400);
+  }, []);
+
+  const goApp = useCallback(() => {
+    setFading(true);
+    setTimeout(()=>{
+      const el = document.getElementById('civitas-overlay');
+      if (el) el.style.display = 'none';
+      if (typeof window.enterApp === 'function') window.enterApp();
+    }, 400);
+  }, []);
+
+  useEffect(() => {
+    window.goToHomepage = () => {
+      const el = document.getElementById('civitas-overlay');
+      if (el) { el.style.display=''; el.style.pointerEvents=''; }
+      goTo('homepage');
+    };
+  }, [goTo]);
+
+  return (
+    <div style={{position:'absolute',inset:0,opacity:fading?0:1,transition:'opacity .4s',pointerEvents:fading?'none':'all'}}>
+      {pantalla==='animacion' && <PantallaAnimacion onDone={()=>goTo('homepage')}/>}
+      {pantalla==='homepage' && <PantallaHomepage onGoPlanes={()=>goTo('planes')} onGoApp={goApp}/>}
+      {pantalla==='planes' && <PantallaPlanes onBack={()=>goTo('homepage')} onGoApp={goApp}/>}
+    </div>
+  );
+}
+
+const _civRoot = ReactDOM.createRoot(document.getElementById('civitas-overlay'));
+_civRoot.render(<ScreenManager/>);
 </script>
 </body>
 </html>
