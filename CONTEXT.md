@@ -1,11 +1,11 @@
-# PROYECTO: Plataforma de Transparencia Ciudadana
+# PROYECTO: Civitas — Transparencia Presupuestaria
 ## Contexto para asistente IA — Master IA ISDI 2026
 
 ---
 
 ## IDENTIDAD DEL PROYECTO
 
-Sistema RAG de transparencia pública con dos bloques:
+**Civitas** es un sistema RAG de transparencia pública con dos bloques:
 - **Bloque A** (COMPLETO y FUNCIONAL con interfaz web): Chatbot que responde preguntas sobre presupuestos públicos en lenguaje natural
 - **Bloque B** (ASPIRACIONAL — fuera del sprint actual): Detección de anomalías en licitaciones públicas españolas
 
@@ -22,9 +22,10 @@ Sistema RAG de transparencia pública con dos bloques:
 | LLM chatbot | GPT-4o-mini | temperature=0.3, cada query |
 | LLM narrativizador | GPT-4o | ejecución única al procesar PDFs — convierte tablas a prosa |
 | Reducción dim. | PCA (sklearn) | reemplazó a UMAP — ver decisiones técnicas |
-| Backend | FastAPI 0.115 + Uvicorn | puerto 8000 |
+| Backend | FastAPI 0.115.12 + Uvicorn | puerto 8000 |
 | Frontend | Standalone HTML (`frontend/index.html`) — React 18 CDN + Babel standalone | sin build step en dev; `npm run build` para producción |
-| Visualización | plotly.js 3.x | importado directo — ver decisiones técnicas |
+| Animación de entrada | Globe.gl 2.30.0 | Three.js — globo 3D interactivo de la pantalla Civitas |
+| Visualización | plotly.js 2.32.0 | importado directo — ver decisiones técnicas |
 | OS / entorno | macOS, VSCode | — |
 
 > **IMPORTANTE sobre Python**: usar siempre `venv/bin/python` y `venv/bin/pip`.
@@ -91,17 +92,21 @@ Isdi-presupuestos/
 │   ├── processed/             ← JSONs intermedios (regenerables con pipeline.py)
 │   └── vectordb/              ← ChromaDB (regenerable con pipeline.py)
 ├── frontend/
-│   ├── index.html             ← TODO el frontend: standalone HTML, React 18 CDN + Babel
+│   ├── index.html             ← TODO el frontend activo: standalone HTML, React 18 CDN + Babel
 │   ├── package.json
-│   └── vite.config.js         ← dev server puerto 5173, proxy /api/ → localhost:8000
+│   ├── vite.config.js         ← dev server puerto 5173, proxy /api/ → localhost:8000
+│   └── src/                   ← legacy — frontend modular Vite original (no usado; superado por index.html)
+│       ├── App.jsx
+│       ├── main.jsx
+│       └── components/        ← ChatPanel.jsx, TechPanel.jsx, VectorMap.jsx (no activos)
 ├── src/
 │   ├── normalizador.py        ← ÚNICO MÓDULO ACTIVO: limpieza de texto plano pre-chunking
-│   ├── chatbot.py             ← legacy — interfaz conversacional terminal (no usado en flujo)
-│   ├── chunker.py             ← legacy — lógica reimplementada en pipeline.py
-│   ├── extractor.py           ← legacy — lógica reimplementada en pipeline.py
-│   ├── narrativizador.py      ← legacy — lógica reimplementada en pipeline.py
-│   ├── embedder.py            ← legacy — lógica reimplementada en pipeline.py
-│   └── procesador_tablas.py   ← script debug/inspección de tablas
+│   └── legacy/                ← lógica histórica absorbida por pipeline.py (referencia, no usados)
+│       ├── chatbot.py         ← interfaz conversacional terminal
+│       ├── chunker.py
+│       ├── extractor.py
+│       ├── narrativizador.py
+│       └── embedder.py
 ├── pipeline.py                ← orquestador Bloque A (todo el procesamiento aquí)
 ├── start_api.sh               ← `source venv/bin/activate && uvicorn api.server:app --reload --port 8000`
 ├── requirements.txt           ← dependencias con versiones exactas
@@ -109,7 +114,8 @@ Isdi-presupuestos/
 └── .gitignore                 ← venv/, __pycache__/, .env
 ```
 
-> **Nota sobre src/**: Solo `normalizador.py` está activo. El resto son módulos históricos cuya lógica fue absorbida por `pipeline.py`. Se mantienen como referencia pero no forman parte del flujo.
+> **Nota sobre src/**: Solo `normalizador.py` está activo. Los módulos históricos están en `src/legacy/` — su lógica fue absorbida por `pipeline.py`. Se mantienen como referencia pero no forman parte del flujo.
+> **Nota sobre frontend/src/**: Código del frontend modular original (Vite + React separado). Completamente superado por `frontend/index.html`. No está activo ni desplegado.
 
 ---
 
@@ -219,6 +225,16 @@ Tabla `conversaciones` — 22 columnas totales. La migración es **defensiva**: 
 - React 18 via CDN (`unpkg.com/react@18.3.1`) + Babel standalone (`@babel/standalone@7.29.0`)
 - Plotly.js via CDN (`cdn.plot.ly/plotly-2.32.0.min.js`)
 - Estética "Liquid Glass": glassmorphism, fondo crema `#F8F7F4`, tipografías Playfair Display + DM Sans, acentos ámbar `#F59E0B` y azul `#007AFF`
+
+### Pantalla de entrada — Animación Civitas (GlobeAnimation)
+Al cargar la app, antes de la navegación principal, se muestra una animación de entrada con Globe.gl:
+- Globo 3D terrestre (imagen nocturna, atmósfera ámbar) arranca con vista Atlántica y auto-rotación
+- Logo Civitas aparece centrado y vuela a la esquina superior izquierda
+- Zoom hacia España (altitude 0.75) y aparición escalonada de 8 citizen queries (burbujas flotantes con preguntas sobre presupuestos autonómicos)
+- Rings de pulso dorado sobre las 3 comunidades indexadas; arcos animados conectando queries a nodos
+- Panel de insights con 5 KPIs (consulta activa, fragmentos RAG, latencia, coherencia, coste)
+- Zoom-out final a vista Atlántica con auto-rotación reanudada + tagline + botón CTA
+- Botón "Saltar →" disponible a los 3s para usuarios que ya conocen el producto
 
 ### Estructura de navegación
 - **Top nav**: 3 secciones — CIUDADANO, COMPLIANCE, MANTENIMIENTO
@@ -524,6 +540,18 @@ systemctl status fastapi && systemctl status nginx
 ---
 
 ## PROBLEMAS RESUELTOS — HISTORIAL
+
+**2026-04-30 — Globe.gl animation upgrade — citizen queries, rings, arcs y final limpio**
+
+`GlobeAnimation` en `frontend/index.html` completamente reescrita. Nueva secuencia de 5 actos: 8 citizen queries distribuidas por España aparecen escalonadas, rings de pulso dorado sobre comunidades indexadas (Globe.gl `.ringsData()`), arcos animados conectando queries a nodos, panel de insights con 5 KPIs, zoom-out final a vista Atlántica con auto-rotación reanudada. Puntos flat (sin pilares), arcos finos, animación `queryPop`. Limpieza completa del globo (puntos + arcos + rings) antes del finale.
+
+---
+
+**2026-04-28 — Rename a Civitas, respuestas JSON con Plotly, rediseño InsightsTab**
+
+Proyecto renombrado a **Civitas** en toda la interfaz. Las respuestas del chat ahora pueden incluir gráficos Plotly embebidos (JSON detectado en respuesta → renderizado inline). InsightsTab rediseñada. Métricas del backend corregidas en `api/server.py`.
+
+---
 
 **2026-04-29 — Recuperación balanceada por comunidad**
 
